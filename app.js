@@ -95,7 +95,7 @@
   $('pi-toggle').onclick = () => setPi(!current().snapshot?.fpga.pi_enabled); $('stop-loop').onclick = () => setPi(false);
   all('.close-dialog').forEach(b => b.onclick = () => b.closest('dialog').close());
   all('dialog').forEach(d => d.onclick = e => { if (e.target === d) { const r = d.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) d.close(); } });
-  $('help-button').onclick = () => $('help-dialog').showModal(); $('nav-overview').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  $('nav-overview').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   async function inspectService() {
     try { const value = await api('/api/ports'); $('serial-ports').innerHTML = value.ports.map(p => `<option value="${escape(p.device)}">${escape(p.description)}</option>`).join(''); $('service-state').textContent = `本机服务就绪 · 发现 ${value.ports.length} 个串口`; }
     catch (e) { $('service-state').textContent = e.message; }
@@ -173,8 +173,7 @@
   function statusText(status) { const a = [[1, '丢光'], [2, 'ADC 过量程'], [4, '输出饱和'], [8, '积分到限'], [16, '反馈冻结'], [32, 'ADC 时钟停止']].filter(([b]) => status & b).map(([, s]) => s); return a.length ? a.join(' / ') : '正常'; }
   function render() {
     const s = current(), config = s.config, cal = s.calibration, r = readings(s), f = r.f, m = r.m, busy = anyBusy();
-    $('clock').textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false, timeZone: 'Asia/Hong_Kong' });
-    $('channel-title').textContent = `${channelId} nm MOT`; $('workspace-channel').textContent = `${channelId} nm MOT`; $('workspace-number').textContent = channelId === '556' ? '01' : '02'; $('footer-channel').textContent = `${channelId} nm MOT`;
+    $('channel-title').textContent = `${channelId} nm MOT`; $('footer-channel').textContent = `${channelId} nm MOT`;
     document.title = `${channelId} nm MOT · PID Control Console`;
     $('connect-dialog-title').textContent = `连接 ${channelId} nm 设备`; $('range-dialog-title').textContent = `${channelId} nm · AOM 功率与范围估算`;
     $('meter-wavelength-note').textContent = `使用本机 TLPMX 64 位驱动，连接后设置并回读 ${channelId} nm。`;

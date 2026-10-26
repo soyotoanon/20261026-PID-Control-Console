@@ -30,18 +30,18 @@
 </defs></svg>
 <aside class="sidebar">
  <a class="brand" href="#overview" aria-label="MOT Control 首页"><span class="brandmark"><svg><use href="#i-wave"/></svg></span><span>MOT<span class="brand-light"> / CONTROL</span><small>光学实验控制系统</small></span></a>
- <div class="workspace"><span class="workspace-dot"></span><div><span id="workspace-channel">556 nm MOT</span><small>独立设定 · 独立设备</small></div><span class="workspace-tag" id="workspace-number">01</span></div>
+
  <div class="nav-label">工作空间</div>
  <nav aria-label="主导航">
 <button class="nav-item active" id="nav-overview"><svg><use href="#i-grid"/></svg>功率总览<span class="nav-active-dot"></span></button>
 <button class="nav-item" id="nav-devices"><svg><use href="#i-plug"/></svg>设备连接</button>
 <button class="nav-item" id="nav-parameters"><svg><use href="#i-sliders"/></svg>光路参数</button>
 </nav>
- <div class="sidebar-note"><span class="tiny-tag">控制架构</span><strong>快速闭环在 FPGA</strong><p>电脑负责设定与监测<br>功率计用于慢速校准</p><div class="mini-chain">PD <span>→</span> ADC <span>→</span> PI <span>→</span> DAC</div></div>
+
  <div class="sidebar-bottom"><span class="small-dot"></span><span>本机控制台<small>双通道 · v1.1</small></span><span class="bottom-mark">MOT</span></div>
 </aside>
 <div class="shell">
- <header class="topbar"><div class="breadcrumbs">实验控制 <span>/</span> <b id="breadcrumb">功率总览</b></div><div class="top-actions"><span class="local-time" id="clock">--:--:--</span><span class="divider"></span><button class="text-button" id="help-button"><svg><use href="#i-info"/></svg>使用说明</button><span class="avatar">HY</span></div></header>
+
  <main>
   <section class="page-intro"><div><div class="eyebrow">OPTICAL POWER STABILIZATION</div><h1><b id="channel-title">556 nm MOT</b> <span>光功率控制台</span></h1><p>设定目标光强，测量当前功率，掌握光路调节余量。</p></div><div class="intro-actions"><span class="mode-pill hardware" id="mode-pill"><span class="small-dot"></span><span id="mode-text">设备未连接</span></span><button class="button" id="connect-button"><svg><use href="#i-plug"/></svg>连接设备</button></div></section>
   <div class="channel-tabs" role="tablist" aria-label="光路通道">
@@ -90,7 +90,7 @@
 
 <dialog id="range-dialog"><div class="dialog-heading"><div><span class="eyebrow">OPTICAL PATH PARAMETERS</span><h2 id="range-dialog-title">556 nm · AOM 功率与范围估算</h2></div><button class="icon-button close-dialog" aria-label="关闭"><svg><use href="#i-x"/></svg></button></div><p class="dialog-description">功率取自连接的功率计。请填写同一工作点的双程效率；改变 RF / DAC 后需要更新效率。未知参数可留空。556 nm 的初始 60%–85% 仅为假设范围。</p><form id="range-form"><div class="form-grid"><label>当前双程效率 η / %<input name="efficiency" type="number" min="0.01" max="100" step="any" placeholder="未知则留空"></label><label>下游透过率 T / %<input name="transmission" type="number" min="0.01" max="100" step="any" placeholder="未知则留空"></label><label>最小双程效率 / %<input name="minimum" type="number" min="0.01" max="100" step="any" placeholder="未知则留空"></label><label>最大双程效率 / %<input name="maximum" type="number" min="0.01" max="100" step="any" placeholder="未知则留空"></label><label>每侧预留跨度 / %<input name="margin" type="number" min="0" max="49" step="any" required></label><label>误差带 / %<input name="tolerance" type="number" min="0.01" max="20" step="any" required></label></div><div class="info-box"><svg><use href="#i-info"/></svg><p>AOM 前功率 = 功率计读数 ÷ (η × T)。理论上下限 = 功率计读数 × 最小或最大效率 ÷ η。仅当功率计位于 AOM 出口、没有下游损耗时，T 才可填 100%。</p></div><p class="field-error" id="range-error" role="alert"></p><div class="dialog-footer"><span>无功率计数据时，估算结果显示“-”</span><button type="submit" class="button primary">保存参数</button></div></form></dialog>
 
-<dialog id="help-dialog"><div class="dialog-heading"><h2>使用说明</h2><button class="icon-button close-dialog" aria-label="关闭"><svg><use href="#i-x"/></svg></button></div><div class="help-steps"><div><b>01</b><p><strong>连接仪器</strong>双击 start.cmd，填写串口与功率计序列号。连接 FPGA 时只读状态，不自动修改目标。</p></div><div><b>02</b><p><strong>填写效率与透过率</strong>填写当前工作点的双程效率与下游透过率。透过率未知可留空，AOM 前功率显示“-”。</p></div><div><b>03</b><p><strong>设置目标功率</strong>输入 mW 并点击应用。电脑通过 30 段标定换算 ADC 目标码，按设定速率更新并读回。</p></div></div><div class="dialog-footer"><span>功率计未连接时，实测与估算显示“-”。</span><button class="button primary close-dialog">知道了</button></div></dialog>
+
 <div class="toast-stack" id="toast-stack" role="status" aria-live="polite"></div>
 </body>
 </html>
