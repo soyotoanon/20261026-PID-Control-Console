@@ -37,19 +37,18 @@
 <button class="nav-item" id="nav-devices"><svg><use href="#i-plug"/></svg>设备连接</button>
 <button class="nav-item" id="nav-parameters"><svg><use href="#i-sliders"/></svg>光路参数</button>
 </nav>
+  <div class="sidebar-channels" aria-orientation="vertical" role="tablist" aria-label="光路通道">
+<button class="channel-tab active" id="channel-556" role="tab" aria-selected="true" data-channel="556"><i class="channel-dot green"></i><strong>556<span class="channel-suffix"> nm MOT</span></strong></button>
+<button class="channel-tab" id="channel-399" role="tab" aria-selected="false" data-channel="399"><i class="channel-dot blue"></i><strong>399<span class="channel-suffix"> nm MOT</span></strong></button>
+<button class="channel-tab reserved" id="channel-future" role="tab" aria-selected="false" disabled title="后续接入"><i class="channel-dot gray"></i><strong>光强温度计</strong></button>
+</div>
 
  <div class="sidebar-bottom"><span class="small-dot"></span><span>本机控制台<small>双通道 · v1.1</small></span><span class="bottom-mark">MOT</span></div>
 </aside>
 <div class="shell">
 
  <main>
-  <section class="page-intro"><div><div class="eyebrow">OPTICAL POWER STABILIZATION</div><h1><b id="channel-title">556 nm MOT</b> <span>光功率控制台</span></h1><p>设定目标光强，测量当前功率，掌握光路调节余量。</p></div><div class="intro-actions"><span class="mode-pill hardware" id="mode-pill"><span class="small-dot"></span><span id="mode-text">设备未连接</span></span><button class="button" id="connect-button"><svg><use href="#i-plug"/></svg>连接设备</button></div></section>
-  <div class="channel-tabs" role="tablist" aria-label="光路通道">
-<button class="channel-tab active" id="channel-556" role="tab" aria-selected="true" data-channel="556"><i class="channel-dot green"></i><strong>556 nm MOT</strong><span>通道 01</span></button>
-<button class="channel-tab" id="channel-399" role="tab" aria-selected="false" data-channel="399"><i class="channel-dot blue"></i><strong>399 nm MOT</strong><span>通道 02</span></button>
-<button class="channel-tab reserved" id="channel-future" role="tab" aria-selected="false" disabled title="后续接入"><i class="channel-dot gray"></i><strong>光强温度计</strong><span>预留通道</span></button>
-</div>
-  <div class="mode-notice" id="mode-notice"><svg><use href="#i-info"/></svg><span id="notice-text">连接光功率计后显示实测功率，并根据效率参数估算 AOM 前功率与可稳定范围。</span><button id="notice-action">配置设备 <svg><use href="#i-arrow"/></svg></button></div>
+  <div class="mode-notice" id="mode-notice"><svg><use href="#i-info"/></svg><span id="notice-text">连接光功率计后显示实测功率，并根据效率参数估算 AOM 前功率与可稳定范围。</span><div class="intro-actions"><span class="mode-pill hardware" id="mode-pill"><span class="small-dot"></span><span id="mode-text">设备未连接</span></span><button class="button" id="connect-button"><svg><use href="#i-plug"/></svg>连接设备</button></div></div>
 
   <section class="view" id="view-overview" aria-label="功率总览">
    <div class="dashboard-grid">

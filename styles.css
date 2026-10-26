@@ -12,3 +12,10 @@ h1>b{font-weight:650}.channel-tabs{display:flex;gap:10px;margin:0 0 18px}.channe
 @media(max-width:600px){.channel-tabs{gap:6px;flex-wrap:wrap}.channel-tab{padding:10px;gap:6px}.channel-tab strong{font-size:10px}.channel-tab.reserved strong{font-size:9px}}
 
 .sidebar-bottom{margin-top:auto}
+
+.sidebar-channels{display:flex;flex-direction:column;gap:8px;margin-top:26px;padding-top:20px;border-top:1px solid var(--border)}
+.sidebar-channels .channel-tab{width:100%;text-align:left;padding:13px;gap:10px}
+.mode-notice .intro-actions{margin-left:auto;flex-shrink:0}
+.mode-notice .button{display:inline-flex;background:#fff;border:1px solid var(--border);padding:8px 12px;border-radius:8px;color:var(--ink)}
+@media(max-width:1050px){.sidebar-channels .channel-tab{justify-content:center;padding:12px 2px}.sidebar-channels .channel-dot,.sidebar-channels .channel-suffix{display:none}.sidebar-channels .reserved strong{font-size:9px;line-height:1.6}.mode-notice{flex-wrap:wrap}}
+@media(max-width:600px){.mode-notice #notice-text{flex:1}.mode-notice .intro-actions{width:100%;margin-top:6px}.sidebar-channels .channel-tab strong{font-size:11px}.sidebar-channels .reserved strong{font-size:9px}}

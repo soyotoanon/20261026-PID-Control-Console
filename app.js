@@ -101,7 +101,7 @@
     catch (e) { $('service-state').textContent = e.message; }
   }
   function openConnect() { const s = current(); $('serial-port').value = s.port; $('meter-serial').value = s.serial; $('connection-error').textContent = ''; $('connection-feedback').textContent = `${channelId} nm · 连接时只读，不自动应用目标。`; $('connect-dialog').showModal(); inspectService(); }
-  ['connect-button', 'notice-action', 'nav-devices'].forEach(id => $(id).onclick = openConnect); $('refresh-ports').onclick = inspectService;
+  ['connect-button', 'nav-devices'].forEach(id => $(id).onclick = openConnect); $('refresh-ports').onclick = inspectService;
   $('serial-port').addEventListener('input', () => { current().port = $('serial-port').value.trim(); });
   $('meter-serial').addEventListener('input', () => { current().serial = $('meter-serial').value.trim(); });
   async function connect(kind) {
@@ -173,7 +173,7 @@
   function statusText(status) { const a = [[1, '丢光'], [2, 'ADC 过量程'], [4, '输出饱和'], [8, '积分到限'], [16, '反馈冻结'], [32, 'ADC 时钟停止']].filter(([b]) => status & b).map(([, s]) => s); return a.length ? a.join(' / ') : '正常'; }
   function render() {
     const s = current(), config = s.config, cal = s.calibration, r = readings(s), f = r.f, m = r.m, busy = anyBusy();
-    $('channel-title').textContent = `${channelId} nm MOT`; $('footer-channel').textContent = `${channelId} nm MOT`;
+    $('footer-channel').textContent = `${channelId} nm MOT`;
     document.title = `${channelId} nm MOT · PID Control Console`;
     $('connect-dialog-title').textContent = `连接 ${channelId} nm 设备`; $('range-dialog-title').textContent = `${channelId} nm · AOM 功率与范围估算`;
     $('meter-wavelength-note').textContent = `使用本机 TLPMX 64 位驱动，连接后设置并回读 ${channelId} nm。`;
