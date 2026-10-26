@@ -27,10 +27,14 @@
   function toast(message, bad = false) { const el = document.createElement('div'); el.className = 'toast' + (bad ? ' error' : ''); el.innerHTML = icon(bad ? 'info' : 'check') + `<span>${escape(message)}</span>`; $('toast-stack').append(el); setTimeout(() => el.remove(), 4200); }
   async function api(path, body, id = channelId) {
     if (!/^https?:$/.test(location.protocol)) throw Error('请双击 start.cmd，通过本机网页连接设备');
+    // Verify channel routing before sending writes, including when an older
+    // single-channel server is still running after the local files are updated.
+    if (body !== undefined) await api('/api/state', undefined, id);
     const response = await fetch(`${path}?channel=${encodeURIComponent(id)}`, { method: body === undefined ? 'GET' : 'POST', headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'X-MOT-Console': '1' }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(12000), cache: 'no-store' });
     let value; try { value = await response.json(); } catch { throw Error('本机服务未启动，请双击 start.cmd'); }
     if (!response.ok) throw Error(value.error || '设备服务异常');
     if (value.app !== 'mot556-console') throw Error('此地址不是 MOT 控制台设备服务');
+    if (value.version === '1.0.0' || value.state && value.state.wavelength_nm !== Number(id)) throw Error('检测到旧版设备服务，请关闭旧控制台命令窗口，再重新启动 start.cmd');
     return value;
   }
   const fresh = d => !!(d?.connected && C.finite(d.sampled_at) && Date.now() - d.sampled_at < 2500);
@@ -127,8 +131,8 @@
   }
   async function poll(id) {
     const s = channels[id]; if (s.polling || !/^https?:$/.test(location.protocol)) return; s.polling = true;
-    try { accept((await api('/api/state', undefined, id)).state, id); }
-    catch { s.snapshot = null; s.applied = false; s.previousConnected = false; }
+    try { accept((await api('/api/state', undefined, id)).state, id); s.serviceError = ''; }
+    catch (e) { s.snapshot = null; s.applied = false; s.previousConnected = false; s.serviceError = e.message.includes('旧版') ? e.message : ''; }
     finally { s.polling = false; if (id === channelId) render(); }
   }
   function openParameters() { const s = current(); Object.keys(s.config).forEach(k => { $('range-form').elements[k].value = s.config[k] ?? ''; }); $('range-error').textContent = ''; $('range-dialog').showModal(); }
@@ -176,6 +180,7 @@
     $('meter-wavelength-note').textContent = `使用本机 TLPMX 64 位驱动，连接后设置并回读 ${channelId} nm。`;
     all('[data-channel]').forEach(b => { const selected = b.dataset.channel === channelId; b.classList.toggle('active', selected); b.setAttribute('aria-selected', String(selected)); b.disabled = busy; });
     $('mode-text').textContent = f?.connected || m?.connected ? '设备模式' : '设备未连接';
+    $('notice-text').textContent = s.serviceError || '连接光功率计后显示实测功率，并根据效率参数估算 AOM 前功率与可稳定范围。';
     $('target-metric').textContent = fmt(s.target); $('target-foot').textContent = s.applied && r.fpgaLive ? (f.ramp ? '正在斜坡更新 · 读回校验' : 'FPGA 目标已读回') : C.finite(s.target) ? '仅本地设定 · 未下发' : '尚未设置目标';
     $('power-metric').textContent = fmt(r.power); $('meter-tag').textContent = r.meterLive ? '实测' : m?.connected ? '等待读数' : '未连接';
     const deviation = C.finite(r.power) && s.target > 0 ? (r.power - s.target) / s.target * 100 : null;
