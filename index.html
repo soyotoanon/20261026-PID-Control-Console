@@ -54,12 +54,12 @@
    <div class="dashboard-grid">
     <div class="main-column">
      <div class="primary-metrics">
-      <article class="metric target-metric"><div class="metric-value instrument-dial"><span id="fpga-power-metric">-</span><span>mW</span></div><div class="dial-description"><div class="metric-label">FPGA 主光路功率</div><span class="tiny-tag" id="fpga-power-tag">未连接</span><div class="metric-foot" id="fpga-power-foot">等待 FPGA 连接</div></div></article>
-      <article class="metric stability-primary"><div class="metric-value instrument-dial"><span id="fpga-rms">-</span><span>%</span></div><div class="dial-description"><div class="metric-label">FPGA 波动 RMS</div><span class="tiny-tag">相对值 · 慢速监测</span><div class="metric-foot" id="fpga-rms-note">采样中</div></div></article>
+      <article class="metric target-metric"><div class="metric-label">FPGA 主光路功率 <span class="tiny-tag" id="fpga-power-tag">未连接</span></div><div class="metric-value instrument-dial"><span id="fpga-power-metric">-</span><span>mW</span></div><div class="metric-foot" id="fpga-power-foot">等待 FPGA 连接</div></article>
+      <article class="metric stability-primary"><div class="metric-label">FPGA 相对波动 RMS</div><div class="metric-value instrument-dial"><span id="fpga-rms">-</span><span>%</span></div><div class="metric-foot" id="fpga-rms-note">采样中</div></article>
+      <article class="metric stability-meter"><div class="metric-label">功率计相对波动 RMS</div><div class="metric-value instrument-dial"><span id="meter-rms">-</span><span>%</span></div><div class="metric-foot" id="meter-rms-note">未连接</div></article>
      </div>
      <div class="metrics auxiliary-metrics">
       <article class="metric"><div class="metric-label">功率计 <span class="tiny-tag" id="meter-tag">未连接</span></div><div class="metric-value"><span id="power-metric">-</span><span>mW</span></div><div class="metric-foot" id="meter-foot">选接功率计</div></article>
-      <article class="metric stability-meter"><div class="metric-label">功率计相对 RMS</div><div class="metric-value"><span id="meter-rms">-</span><span>%</span></div><div class="metric-foot" id="meter-rms-note">未连接</div></article>
       <article class="metric"><div class="metric-label"><span id="upstream-label">等效入射功率</span> <span class="tiny-tag" id="upstream-tag">未校正</span></div><div class="metric-value"><span id="upstream-metric">-</span><span>mW</span></div><div class="metric-foot"><span id="upstream-note">需功率计与光路参数</span></div></article>
      </div>
 

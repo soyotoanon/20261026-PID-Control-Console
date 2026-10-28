@@ -157,25 +157,25 @@ input,select{color:var(--ink)}
 .card-heading .subtle{color:#6e7e6b}
 
 /* Circular numeric faces echo the reference without suggesting a gauge scale. */
-.primary-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:6px 0 10px;border-bottom:1px solid #c4cbbb}
-.primary-metrics .metric{min-width:0;display:grid;grid-template-columns:112px minmax(0,1fr);align-items:center;gap:12px;padding:2px 2px 5px;background:transparent;border:0;border-radius:0;box-shadow:none}
-.primary-metrics .instrument-dial{width:112px;height:112px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin:0;border:2px solid #839b6c;border-radius:50%;background:#eff1e2;color:#2b513b;box-shadow:4px 5px 0 #a3ad8e66;line-height:1;font-family:Consolas,'Cascadia Mono',monospace;letter-spacing:-1px;font-size:29px;font-weight:600}
+.primary-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0 0 9px;border-bottom:1px solid #c4cbbb}
+.primary-metrics .metric{min-width:0;display:flex;flex-direction:column;align-items:center;gap:8px;padding:2px 0 0;background:transparent;border:0;border-radius:0;box-shadow:none;text-align:center}
+.primary-metrics .instrument-dial{width:98px;height:98px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin:0;border:2px solid #839b6c;border-radius:50%;background:#eff1e2;color:#2b513b;box-shadow:4px 5px 0 #a3ad8e66;line-height:1;font-family:Consolas,'Cascadia Mono',monospace;letter-spacing:-1px;font-size:28px;font-weight:600}
 .primary-metrics .instrument-dial>span:last-child{font:11px 'Segoe UI',sans-serif;letter-spacing:1px;color:#617456}
 .primary-metrics .stability-primary .instrument-dial{border-color:#7f9bab;background:#e9eef0;color:#416578;box-shadow:4px 5px 0 #849da666}
 .primary-metrics .stability-primary .instrument-dial>span:last-child{color:#5b7988}
-.dial-description{min-width:0}
-.primary-metrics .metric-label{display:block;margin:0 0 7px;white-space:normal;font-size:12px;line-height:1.6;font-weight:600;color:#314736}
+.primary-metrics .metric-label{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;margin:0;min-height:20px;white-space:normal;font-size:12px;line-height:1.6;font-weight:600;color:#314736}
 .primary-metrics .stability-primary .metric-label{color:#415f70}
-.primary-metrics .metric-foot{display:block;white-space:normal;line-height:1.7;font-size:9px;color:#707c6d;margin-top:7px}
+.primary-metrics .metric-foot{display:block;white-space:normal;line-height:1.5;font-size:9px;color:#707c6d;margin:1px 0 0;min-height:27px}
 .primary-metrics .tiny-tag{display:inline-block;font-size:8px;background:#e4e8da;border:0;border-radius:2px;padding:2px 5px;color:#586b50}
 .primary-metrics .stability-primary .tiny-tag{background:#dde6e9;color:#4d6a7b}
+.primary-metrics .stability-meter .instrument-dial{border-color:#75a38b;background:#e8efe7;color:#38664e;box-shadow:4px 5px 0 #88a59266}
 
-.auxiliary-metrics{gap:10px}
-.auxiliary-metrics .metric{padding:9px 11px;border:1px solid #cbd0c3;border-radius:3px;background:#f8f8f0;box-shadow:none}
-.auxiliary-metrics .metric-value{font:23px Consolas,monospace;letter-spacing:-.6px;margin-top:6px;line-height:1.15;color:#355b48}
+.auxiliary-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.auxiliary-metrics .metric{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;gap:3px 8px;padding:8px 11px;border:1px solid #cbd0c3;border-radius:3px;background:#f8f8f0;box-shadow:none;align-items:center}
+.auxiliary-metrics .metric-value{grid-column:2;grid-row:1 / 3;font:23px Consolas,monospace;letter-spacing:-.6px;margin:0;line-height:1.15;color:#355b48}
 .auxiliary-metrics .metric-value>span:last-child{font:10px 'Segoe UI',sans-serif;letter-spacing:0;color:#75806e}
-.auxiliary-metrics .metric-label{font-size:10px;color:#65735f}
-.auxiliary-metrics .metric-foot{font-size:8px;white-space:normal;line-height:1.5;margin-top:6px;min-height:12px;color:#6e7b66}
+.auxiliary-metrics .metric-label{grid-column:1;grid-row:1;font-size:10px;color:#65735f;justify-content:flex-start;gap:5px;flex-wrap:wrap}
+.auxiliary-metrics .metric-foot{grid-column:1;grid-row:2;font-size:8px;white-space:normal;line-height:1.5;margin:0;min-height:12px;color:#6e7b66}
 .auxiliary-metrics .metric:last-child{background:#f3f0e5;border-color:#d1cbb7}
 .auxiliary-metrics .metric:last-child .metric-value{color:#796b44}
 .auxiliary-metrics .tiny-tag{font-size:8px;padding:1px 4px}
@@ -250,14 +250,14 @@ dialog::backdrop{background:#182e2960}
 
 @media(min-width:1400px){
   main{padding:18px 24px 0}.dashboard-grid{gap:22px}
-  .primary-metrics .metric{grid-template-columns:128px minmax(0,1fr);gap:17px}
-  .primary-metrics .instrument-dial{width:128px;height:128px;font-size:34px}
+  .primary-metrics .metric{gap:9px}
+  .primary-metrics .instrument-dial{width:112px;height:112px;font-size:32px}
   .primary-metrics .metric-label{font-size:14px}.primary-metrics .metric-foot{font-size:10px}
 }
 @media(min-width:901px) and (max-width:1080px){
   .primary-metrics{gap:8px}
-  .primary-metrics .metric{grid-template-columns:96px minmax(0,1fr);gap:9px}
-  .primary-metrics .instrument-dial{width:96px;height:96px;font-size:26px}
+  .primary-metrics .metric{gap:7px}
+  .primary-metrics .instrument-dial{width:90px;height:90px;font-size:26px}
   .primary-metrics .metric-label{font-size:11px}
   .primary-metrics .tiny-tag{font-size:8px;padding:1px 3px}
 }
@@ -268,8 +268,8 @@ dialog::backdrop{background:#182e2960}
   .sidebar-channels{margin-top:18px}.sidebar-channels .channel-tab{width:57px;height:57px}
   .sidebar-channels .reserved{height:33px}.sidebar-channels .reserved strong{font-size:8px}
   .dashboard-grid{grid-template-columns:1fr}.control-column{order:-1;display:flex;flex-direction:column}
-  .sidebar-bottom{font-size:8px}.primary-metrics .metric{grid-template-columns:104px minmax(0,1fr);gap:10px}
-  .primary-metrics .instrument-dial{width:104px;height:104px;font-size:28px}
+  .sidebar-bottom{font-size:8px}.primary-metrics .metric{gap:8px}
+  .primary-metrics .instrument-dial{width:96px;height:96px;font-size:27px}
 }
 @media(max-width:600px){
   main{padding:10px 10px 0}.sidebar{width:68px;padding:13px 5px}.shell{margin-left:68px}
@@ -280,14 +280,15 @@ dialog::backdrop{background:#182e2960}
   .mode-notice{gap:8px;padding-bottom:8px;margin-bottom:10px}.mode-notice .console-title{font-size:14px;letter-spacing:0}
   .console-title span,#notice-text{display:none}.intro-actions{gap:7px;margin-top:0}
   .mode-notice .button{padding:6px 8px;font-size:10px}.mode-pill{font-size:9px}
-  .primary-metrics{gap:10px}.primary-metrics .metric{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:2px 0}
-  .primary-metrics .instrument-dial{width:104px;height:104px;font-size:28px}
-  .primary-metrics .metric-label{font-size:11px;margin-bottom:5px}.primary-metrics .metric-foot{font-size:8px;line-height:1.5}
-  .primary-metrics .tiny-tag{font-size:8px}.primary-metrics .metric-foot{margin-top:5px}
-  .auxiliary-metrics .metric:last-child{display:flex;align-items:center;justify-content:space-between;padding:9px 11px}
+  .primary-metrics{gap:7px}.primary-metrics .metric{gap:8px;padding:2px 0}
+  .primary-metrics .instrument-dial{width:76px;height:76px;font-size:21px}
+  .primary-metrics .metric-label{font-size:10px;min-height:34px;margin:0}.primary-metrics .metric-foot{font-size:8px;line-height:1.5;margin:1px 0 0}
+  .primary-metrics .tiny-tag{font-size:8px}
+  .auxiliary-metrics{grid-template-columns:1fr}
+  .auxiliary-metrics .metric:last-child{display:grid;grid-column:auto;align-items:center;padding:8px 11px}
   .auxiliary-metrics .metric:last-child .metric-label{font-size:10px;display:flex;gap:5px}
   .auxiliary-metrics .metric:last-child .metric-value{font-size:21px;margin:0}
-  .auxiliary-metrics .metric:last-child .metric-foot{display:none}
+  .auxiliary-metrics .metric:last-child .metric-foot{display:block}
   .setpoint-card form{padding-left:12px;padding-right:12px}.setpoint-card>.card-heading{padding-left:12px;padding-right:12px}
   .target-range-value strong{font-size:21px}.chart-legend{font-size:8px}
   dialog{padding:18px}.dialog-heading h2{font-size:18px}
