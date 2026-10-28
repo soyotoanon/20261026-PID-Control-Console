@@ -71,6 +71,7 @@
     const lowDac = Math.max(f.out_min, calibratedMin), highDac = Math.min(f.out_max, calibratedMax);
     if (lowDac >= highDac) throw Error('DAC 可调区间不在效率标定覆盖范围内');
     const rf = rfAt(f.dac_code), lowRF = rfAt(lowDac), highRF = rfAt(highDac);
+    if (rf < efficiency556[0].rf || rf > efficiency556.at(-1).rf) throw Error(`当前 RF ≈ ${rf.toFixed(1)} mVpp，超出效率标定 300–550 mVpp`);
     const efficiency = interpolate(efficiency556, rf, 'rf', 'eta');
     const eta = [interpolate(efficiency556, lowRF, 'rf', 'eta'), interpolate(efficiency556, highRF, 'rf', 'eta'),
       ...efficiency556.filter(p => p.rf > lowRF && p.rf < highRF).map(p => p.eta)];

@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "live": {
+    "power-metric": "4.96",
+    "upstream-label": "等效入射功率",
+    "upstream-metric": "-",
+    "upstream-note": "当前 RF ≈ 297.3 mVpp，超出效率标定 300–550 mVpp",
+    "dac-detail": "限幅 1400–15000"
+  },
+  "fixture_checks": {
+    "power-metric": "4.95",
+    "target-metric": "5.00",
+    "efficiency-detail": "59.73% DAC → RF → 实测曲线",
+    "range-values": "3.63 – 6.25",
+    "range-note": "RF ≈ 348.04 mVpp · η ≈ 59.73% · 标定覆盖 DAC 2710–15000（部分范围，未外推）；按当前光路透过率不变估算。",
+    "upstream-label": "等效入射功率",
+    "upstream-metric": "8.29",
+    "upstream-note": "P/η · 未校正下游损耗，实际入射功率需再除以 T",
+    "dac-detail": "限幅 1400–15000"
+  },
+  "errors": []
+}

@@ -165,20 +165,20 @@
   function renderRange(power) {
     const s = current(), config = opticalConfig(s); let range = null;
     if (C.finite(power) && power > 0) { try { range = C.estimateRange({ ...config, reference: power }); } catch {} }
-    const upstream = C.finite(power) && power >= 0 && config.efficiency > 0 && config.transmission > 0 ? power / (config.efficiency / 100 * config.transmission / 100) : null;
+    const hasTransmission = C.finite(config.transmission) && config.transmission > 0 && config.transmission <= 100;
+    const equivalent = C.finite(power) && power >= 0 && C.finite(config.efficiency) && config.efficiency > 0 ? power / (config.efficiency / 100) : null;
+    const upstream = C.finite(equivalent) ? hasTransmission ? equivalent / (config.transmission / 100) : equivalent : null;
+    $('upstream-label').textContent = hasTransmission ? 'AOM 前光功率' : '等效入射功率';
+    $('upstream-tag').textContent = hasTransmission ? '估算' : '未校正';
     $('upstream-metric').textContent = fmt(upstream);
-    $('upstream-note').textContent = !C.finite(power) ? '等待功率计与光路参数' : !config.efficiency || !config.transmission ? config.error || (!config.transmission ? '待填 AOM 出口至功率计的总透过率 T' : '当前效率未知') : `η ${config.efficiency}% · T ${config.transmission}%`;
+    $('upstream-note').textContent = !C.finite(power) ? '等待功率计读数' : !C.finite(equivalent) ? config.error || '等待衍射效率' : hasTransmission ? `η ${fmt(config.efficiency)}% · T ${fmt(config.transmission)}%` : 'P/η · 未校正下游损耗，实际入射功率需再除以 T';
     $('range-values').innerHTML = range ? `${fmt(range.low)} <span>–</span> ${fmt(range.high)}` : '-';
     $('range-recommend').textContent = range ? `建议稳定区间 ${fmt(range.recommendedLow)}–${fmt(range.recommendedHigh)} mW` : '建议稳定区间 -';
-    $('range-low').textContent = range ? fmt(range.low) : '-'; $('range-high').textContent = range ? fmt(range.high) : '-';
-    $('range-marker').hidden = !range || !C.finite(s.target);
-    const track = document.querySelector('.range-recommended'); track.style.opacity = range ? '1' : '.2'; track.style.left = config.margin + '%'; track.style.right = config.margin + '%';
-    if (range && C.finite(s.target)) { const outside = s.target < range.low || s.target > range.high; $('range-marker').style.left = Math.max(0, Math.min(100, (s.target - range.low) / (range.high - range.low) * 100)) + '%'; $('range-marker').style.background = outside ? '#b67c25' : '#176e58'; $('range-target-label').textContent = outside ? '目标超出估算范围' : `目标 ${fmt(s.target)} mW`; }
-    else $('range-target-label').textContent = !C.finite(power) ? '等待功率计数据' : !range ? '等待效率范围参数' : '尚未设置目标';
+    $('range-target-label').textContent = range && C.finite(s.target) ? (s.target < range.low || s.target > range.high ? '当前目标超出估算范围' : '') : '';
     $('range-note').textContent = range ? config.automatic ?
       `RF ≈ ${fmt(config.rf)} mVpp · η ≈ ${fmt(config.efficiency)}% · 标定覆盖 DAC ${config.lowDac}–${config.highDac}${config.partial ? '（部分范围，未外推）' : ''}；按当前光路透过率不变估算。` :
       `按实测功率和手填效率估算；改变 RF 后须更新效率。` : config.error || '等待功率计与本路效率参数';
-    if (config.automatic) $('efficiency-detail').innerHTML = C.finite(config.efficiency) ? `${fmt(config.efficiency)}% <small>DAC → RF → 实测曲线</small>` : '<small>等待有效 DAC 读数</small>';
+    if (config.automatic) $('efficiency-detail').innerHTML = C.finite(config.efficiency) ? `${fmt(config.efficiency)}% <small>DAC → RF → 实测曲线</small>` : `<small>${escape(config.error || '等待有效 DAC 读数')}</small>`;
   }
   function statusText(status) { const a = [[1, '丢光'], [2, 'ADC 过量程历史标志'], [4, '输出饱和'], [8, '积分到限'], [16, '反馈冻结'], [32, 'ADC 时钟停止']].filter(([b]) => status & b).map(([, s]) => s); return a.length ? a.join(' / ') : '正常'; }
   function render() {
