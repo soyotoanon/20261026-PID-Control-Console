@@ -42,11 +42,19 @@
     if (![current, target, rate, seconds].every(finite) || rate <= 0 || seconds < 0) throw Error('斜坡速率必须大于 0');
     return current + Math.sign(target - current) * Math.min(Math.abs(target - current), rate * seconds);
   }
-  function stats(values, target) {
+  function stats(values) {
     const a = values.filter(finite);
-    if (!a.length) return { mean: null, rms: null, pp: null };
+    if (!a.length) return { mean: null, sigma: null, rms: null, pp: null, count: 0 };
     const mean = a.reduce((s, v) => s + v, 0) / a.length;
-    return { mean, rms: target > 0 ? Math.sqrt(a.reduce((s, v) => s + (v - mean) ** 2, 0) / a.length) / target * 100 : null, pp: Math.max(...a) - Math.min(...a) };
+    // RMS fluctuations about this instrument's own mean, normalized by that mean.
+    const sigma = a.length >= 2 ? Math.sqrt(a.reduce((s, v) => s + (v - mean) ** 2, 0) / a.length) : null;
+    return { mean, sigma, rms: finite(sigma) && mean > 0 ? sigma / mean * 100 : null, pp: Math.max(...a) - Math.min(...a), count: a.length };
+  }
+  function windowStats(history, key, end, seconds, since = 0) {
+    const start = Math.max(end - seconds * 1000, since);
+    const points = history.filter(p => finite(p[key]) && finite(p[key + 'Time']) && p[key + 'Time'] >= start && p[key + 'Time'] <= end);
+    const result = stats(points.map(p => p[key]));
+    return { ...result, duration: points.length > 1 ? (points.at(-1)[key + 'Time'] - points[0][key + 'Time']) / 1000 : 0 };
   }
   function parseCalibration(text, filename) {
     if (/\.csv$/i.test(filename)) {
@@ -78,7 +86,7 @@
     return { rf, efficiency, minimum: Math.min(...eta), maximum: Math.max(...eta), lowDac, highDac,
       partial: lowDac !== f.out_min || highDac !== f.out_max };
   }
-  const api = { estimateOptics556, finite, normalizeCalibration, interpolate, toCode, toPower, estimateRange, ramp, stats, parseCalibration };
+  const api = { estimateOptics556, finite, normalizeCalibration, interpolate, toCode, toPower, estimateRange, ramp, stats, windowStats, parseCalibration };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.MotCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

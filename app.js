@@ -31,7 +31,7 @@
         }
       } catch {}
     }
-    return { id, config, calibration, target: id === '556' ? 10 : null, draft: id === '556' ? '10.00' : '', rate: '2.0', port: id === '556' ? 'COM8' : '', serial, chosen: false, applied: false, snapshot: null, polling: false, busy: false, history: [], window: 60, paused: false, pauseTime: 0, lastMeter: null, lastAdc: null, error: '', previousConnected: false };
+    return { id, config, calibration, target: id === '556' ? 10 : null, draft: id === '556' ? '10.00' : '', rate: '2.0', port: id === '556' ? 'COM8' : '', serial, chosen: false, applied: false, snapshot: null, polling: false, busy: false, history: [], window: 60, paused: false, pauseTime: 0, lastMeter: null, lastAdc: null, error: '', previousConnected: false, statsSince: { power: 0, adc: 0 }, lastTargetCode: null, wasRamping: false };
   }
   const channels = { '556': makeChannel('556'), '399': makeChannel('399') };
   let channelId = '556';
@@ -164,6 +164,17 @@
   $('connect-fpga').onclick = () => connect('fpga'); $('connect-meter').onclick = () => connect('meter');
   function accept(snapshot, id) {
     const s = channels[id], f = snapshot.fpga, m = snapshot.meter;
+    const now = Date.now(), previous = s.snapshot;
+    const ramping = !!(f.connected && f.ramp);
+    const targetChanged = f.connected && s.lastTargetCode !== null && f.setpoint_code !== s.lastTargetCode;
+    if (targetChanged || ramping || s.wasRamping) s.statsSince = { power: now, adc: now };
+    if (f.connected) s.lastTargetCode = f.setpoint_code;
+    s.wasRamping = ramping;
+    for (const [key, device, old, identity] of [['power', m, previous?.meter, 'serial'], ['adc', f, previous?.fpga, 'port']]) {
+      const deviceId = key === 'power' ? device.identity?.[identity] : device[identity];
+      const oldId = key === 'power' ? old?.identity?.[identity] : old?.[identity];
+      if (!fresh(device) || !fresh(old) || deviceId !== oldId || device.sampled_at - old.sampled_at > 2500 || device.sampled_at < old.sampled_at) s.statsSince[key] = now;
+    }
     const meterChanged = !!m.connected !== !!s.snapshot?.meter?.connected || m.identity?.serial !== s.snapshot?.meter?.identity?.serial;
     if (f.connected && !s.previousConnected) {
       if (!s.chosen && s.calibration) { try { s.target = C.toPower(s.calibration, f.setpoint_code); s.draft = s.target.toFixed(2); s.applied = true; if (id === channelId) { $('target-input').value = s.draft; preview(); } } catch {} }
@@ -175,7 +186,7 @@
     if (meterChanged && id === channelId) renderMeterOptions();
     const error = [f.error, m.error].filter(Boolean).join('；'); if (error && error !== s.error) toast(`${id} nm · ${error}`, true); s.error = error;
     const r = readings(s), newM = fresh(m) && m.sampled_at !== s.lastMeter, newF = fresh(f) && f.sampled_at !== s.lastAdc;
-    if (newM || newF) { s.history.push({ time: Date.now(), power: newM ? r.power : null, adc: newF ? r.adcPower : null, target: s.target }); if (newM) s.lastMeter = m.sampled_at; if (newF) s.lastAdc = f.sampled_at; if (s.history.length > 3000) s.history.splice(0, s.history.length - 3000); }
+    if (newM || newF) { s.history.push({ time: now, power: newM ? r.power : null, powerTime: newM ? m.sampled_at : null, adc: newF ? r.adcPower : null, adcTime: newF ? f.sampled_at : null, target: s.target }); if (newM) s.lastMeter = m.sampled_at; if (newF) s.lastAdc = f.sampled_at; if (s.history.length > 3000) s.history.splice(0, s.history.length - 3000); }
   }
   async function poll(id) {
     const s = channels[id]; if (s.polling || !/^https?:$/.test(location.protocol)) return; s.polling = true;
@@ -251,12 +262,12 @@
     $('meter-wavelength-note').textContent = `支持 PM100D / PM100USB；连接后自动设置为 ${channelId} nm。`;
     all('[data-channel]').forEach(b => { const selected = b.dataset.channel === channelId; b.classList.toggle('active', selected); b.setAttribute('aria-selected', String(selected)); b.disabled = busy; });
     $('mode-text').textContent = f?.connected || m?.connected ? '设备模式' : '设备未连接';
-    $('notice-text').textContent = s.serviceError || '连接光功率计后显示实测功率，并根据效率参数估算 AOM 前功率与可稳定范围。';
-    $('target-metric').textContent = fmt(s.target); $('target-foot').textContent = s.applied && r.fpgaLive ? (f.ramp ? '正在斜坡更新 · 读回校验' : cal?.historical ? '板上目标 · 历史标定换算' : 'FPGA 目标已读回') : C.finite(s.target) ? '仅本地设定 · 未下发' : '尚未设置目标';
+    $('notice-text').textContent = s.serviceError || `${channelId} nm · 功率与稳定度`;
+    $('fpga-power-metric').textContent = fmt(r.adcPower);
+    $('fpga-power-tag').textContent = r.fpgaLive ? '估算' : '未连接';
+    $('fpga-power-foot').textContent = !r.fpgaLive ? '等待 FPGA 连接' : !cal ? '需本路功率标定' : !C.finite(r.adcPower) ? 'ADC 超出本路标定范围' : '实时 ADC · 本路标定换算';
     $('power-metric').textContent = fmt(r.power); $('meter-tag').textContent = r.meterLive ? '实测' : m?.connected ? '等待读数' : '未连接';
-    const deviation = C.finite(r.power) && s.target > 0 ? (r.power - s.target) / s.target * 100 : null;
-    $('error-metric').textContent = C.finite(deviation) ? `${deviation >= 0 ? '+' : ''}${fmt(deviation)}%` : '-';
-    $('lock-tag').textContent = C.finite(deviation) ? Math.abs(deviation) <= config.tolerance ? '误差带内' : '超出误差带' : '未测量'; $('lock-tag').classList.toggle('warn', C.finite(deviation) && Math.abs(deviation) > config.tolerance);
+    $('meter-foot').textContent = r.meterLive ? m.identity?.model || '实测' : '选接功率计';
     $('tolerance-foot').innerHTML = `<i></i>误差带 ±${fmt(config.tolerance)}%`;
     $('adc-code').textContent = r.fpgaLive ? f.adc_code : '-'; $('adc-target').textContent = r.fpgaLive ? f.setpoint_code : '-'; $('dac-code').textContent = r.fpgaLive ? f.dac_code : '-'; $('adc-power').innerHTML = fmt(r.adcPower) + '<small> mW</small>';
     $('readback-label').textContent = r.fpgaLive ? '14 位数字码 · 设备读回' : '等待 FPGA 连接'; $('dac-detail').textContent = r.fpgaLive ? `${f.dac_code === f.out_max ? '已达上限 · ' : f.dac_code === f.out_min ? '已达下限 · ' : ''}限幅 ${f.out_min}–${f.out_max}` : '未连接';
@@ -274,7 +285,18 @@
     $('fpga-strip').textContent = f?.connected ? f.port + (r.fpgaLive ? ' · 已连接' : ' · 数据过期') : '未连接'; $('pm-strip').textContent = m?.connected ? (m.identity?.model || 'Thorlabs') + (r.meterLive ? ` · ${channelId} nm` : ' · 等待读数') : '未连接'; $('last-update').textContent = r.meterLive || r.fpgaLive ? '数据更新中' : '尚无设备读数';
     $('connect-fpga').textContent = f?.connected ? '断开 FPGA' : '连接 FPGA'; $('connect-meter').textContent = m?.connected ? '断开功率计' : '连接功率计'; $('connect-fpga').disabled = busy; $('connect-meter').disabled = busy || (!m?.connected && (!s.serial || meterScanning));
     $('meter-serial').disabled = busy || meterScanning || !!m?.connected; $('refresh-meters').disabled = busy || meterScanning;
-    renderRange(r.power); if (!s.paused) renderChart();
+    renderStability(r); renderRange(r.power); if (!s.paused) renderChart();
+  }
+  function renderStability(r = readings()) {
+    const s = current(), now = Date.now();
+    for (const [key, id, live] of [['adc', 'fpga', r.fpgaLive], ['power', 'meter', r.meterLive]]) {
+      const stats = C.windowStats(live ? s.history : [], key, now, s.window, s.statsSince[key]);
+      const value = stats.rms;
+      $(`${id}-rms`).textContent = C.finite(value) ? value > 0 && value < .001 ? '<0.001' : fmt(value, 3) : '-';
+      $(`${id}-rms`).dataset.count = String(stats.count);
+      $(`${id}-rms-note`).textContent = !live ? '未连接' : key === 'adc' && !s.calibration ? '需本路功率标定' : key === 'adc' && !C.finite(r.adcPower) ? '超出标定范围' : s.wasRamping ? '目标切换中' : stats.count < 2 ? `采样中 · ${stats.count} 点` : stats.mean <= 0 ? '均值需大于 0' : `近 ${s.window} 秒 · 已采 ${fmt(stats.duration, 1)} 秒 / ${stats.count} 点`;
+      $(`${id}-rms`).title = `各自波动 RMS ÷ 各自平均值 × 100%；均值 ${fmt(stats.mean, 4)} mW，波动 RMS ${fmt(stats.sigma, 4)} mW。目标切换或重连后重新统计；仅反映网页慢速监测。`;
+    }
   }
   function renderChart() {
     const s = current(), config = s.config, end = s.paused ? s.pauseTime : Date.now(), start = end - s.window * 1000, data = s.history.filter(d => d.time >= start && d.time <= end), nominal = s.target || 1;
@@ -283,23 +305,24 @@
     const pad = Math.max((high - low) * .3, .04); low = Math.max(0, low - pad); high += pad;
     const x = t => 58 + (t - start) / (end - start) * 760, y = v => 208 - (v - low) / (high - low) * 180;
     let out = '<defs><clipPath id="plot-clip"><rect x="57" y="23" width="763" height="187"/></clipPath></defs>';
-    for (let i = 0; i <= 4; i++) { const v = low + (high - low) * i / 4, yy = y(v); out += `<path d="M58 ${yy}H818" stroke="#edf1ee"/><text x="46" y="${yy + 3}" text-anchor="end">${fmt(v, high - low > 5 ? 1 : 2)}</text>`; }
+    for (let i = 0; i <= 4; i++) { const v = low + (high - low) * i / 4, yy = y(v); out += `<path d="M58 ${yy}H818" stroke="#e2e5d7"/><text x="46" y="${yy + 3}" text-anchor="end">${fmt(v, high - low > 5 ? 1 : 2)}</text>`; }
     for (let i = 0; i <= 5; i++) out += `<text x="${58 + i / 5 * 760}" y="236" text-anchor="${i === 0 ? 'start' : i === 5 ? 'end' : 'middle'}">${i === 5 ? '现在' : '-' + Math.round(s.window * (1 - i / 5)) + 's'}</text>`;
     const top = y(nominal * (1 + config.tolerance / 100)), bottom = y(nominal * (1 - config.tolerance / 100));
-    out += `<g clip-path="url(#plot-clip)"><rect x="58" y="${top}" width="760" height="${bottom - top}" fill="#edf5ef"/>`;
-    if (C.finite(s.target)) out += `<path d="M58 ${y(s.target)}H818" stroke="#b6c5b2" stroke-dasharray="5 5"/>`;
-    for (const [key, color, width] of [['adc', '#a5bfca', 1.2], ['power', '#31846b', 1.7]]) {
+    out += `<g clip-path="url(#plot-clip)"><rect x="58" y="${top}" width="760" height="${bottom - top}" fill="#edf0df"/>`;
+    if (C.finite(s.target)) out += `<path d="M58 ${y(s.target)}H818" stroke="#b19b66" stroke-dasharray="5 5"/>`;
+    for (const [key, color, width] of [['adc', '#64889b', 1.2], ['power', '#39725a', 1.7]]) {
       let path = '', previous = null;
       for (const d of data) { if (!C.finite(d[key])) continue; path += (previous && d.time - previous.time < 2500 ? 'L' : 'M') + x(d.time).toFixed(2) + ',' + y(d[key]).toFixed(2); previous = d; }
       if (path) out += `<path d="${path}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linejoin="round"/>`;
     }
     out += '</g>';
-    if (!data.some(d => C.finite(d.power) || C.finite(d.adc))) out += '<rect x="244" y="88" width="360" height="57" rx="8" fill="#fff" fill-opacity=".95"/><text x="424" y="112" text-anchor="middle" style="font:12px Microsoft YaHei,sans-serif;fill:#8da497">等待本路设备连接</text><text x="424" y="133" text-anchor="middle" style="font:10px Microsoft YaHei,sans-serif;fill:#b0bdb4">功率计未连接时，读数与估算显示“-”</text>';
+    if (!data.some(d => C.finite(d.power) || C.finite(d.adc))) out += '<rect x="244" y="88" width="360" height="57" rx="2" fill="#fcfbf6" fill-opacity=".95"/><text x="424" y="112" text-anchor="middle" style="font:12px Microsoft YaHei,sans-serif;fill:#63775d">等待本路设备连接</text><text x="424" y="133" text-anchor="middle" style="font:10px Microsoft YaHei,sans-serif;fill:#7d8b72">连接 FPGA 后显示实时功率曲线</text>';
+    $('trend-svg').setAttribute('aria-label', `${channelId} nm 近 ${s.window} 秒目标与功率曲线`);
     $('trend-svg').innerHTML = out;
-    const measured = data.map(d => d.power).filter(C.finite), stats = C.stats(measured, s.target);
-    $('stat-mean').innerHTML = fmt(stats.mean, 3) + '<small> mW</small>'; $('stat-rms').innerHTML = fmt(stats.rms, 3) + '<small> %</small>'; $('stat-pp').innerHTML = fmt(stats.pp, 3) + '<small> mW</small>'; $('stat-count').innerHTML = measured.length + '<small> 点</small>';
+    const stats = C.windowStats(readings(s).meterLive ? s.history : [], 'power', end, s.window, s.statsSince.power);
+    $('stat-mean').innerHTML = fmt(stats.mean, 3) + '<small> mW</small>'; $('stat-pp').innerHTML = fmt(stats.pp, 3) + '<small> mW</small>'; $('stat-count').innerHTML = stats.count + '<small> 点</small>';
   }
-  all('[data-window]').forEach(b => b.onclick = () => { current().window = Number(b.dataset.window); all('[data-window]').forEach(x => x.classList.toggle('active', x === b)); renderChart(); });
+  all('[data-window]').forEach(b => b.onclick = () => { current().window = Number(b.dataset.window); all('[data-window]').forEach(x => x.classList.toggle('active', x === b)); renderChart(); renderStability(); });
   $('pause-chart').onclick = () => { const s = current(); s.paused = !s.paused; s.pauseTime = Date.now(); $('pause-chart').innerHTML = icon(s.paused ? 'play' : 'pause'); $('pause-chart').setAttribute('aria-label', s.paused ? '继续显示' : '暂停显示'); renderChart(); render(); };
   loadControls(); render();
   const pollAll = () => { for (const id of Object.keys(channels)) poll(id); };

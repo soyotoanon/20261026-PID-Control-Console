@@ -1,0 +1,32 @@
+{
+  "formula": "sqrt(sum((P_i - mean(P))^2)/N) / mean(P) * 100%",
+  "normalization": "Each instrument uses its own mean; no target normalization or cross-instrument difference.",
+  "insufficient_data": "RMS is unavailable with fewer than two samples or non-positive mean.",
+  "data_scope": "Browser slow telemetry, distinct from full-bandwidth FPGA sampling. Readings themselves are not averaged.",
+  "reset": "Actual target changes/ramps reset both sources. Reconnection, replacement or sample gaps reset only the affected source.",
+  "prior_live_browser_verification": {
+    "checks": [
+      "Without a meter: FPGA estimated power and RMS are live; optional meter fields are dashes",
+      "Independent readings with different means: steady 20mW meter gives zero RMS while FPGA fluctuates around6mW",
+      "Meter replacement resets only meter statistics; own-mean relative RMS is1%, independent of the FPGA target",
+      "Target ramp clears both RMS estimates; old step is excluded and new steady samples give zero fluctuation",
+      "30s/60s/5min selection and556/399 channel isolation preserved",
+      "Disconnecting only the meter clears its readouts while FPGA monitoring continues",
+      "Five viewport sizes have no horizontal overflow; desktop first screen includes FPGA power/RMS and target/range/apply",
+      "Real device telemetry rendered in final page without any device writes"
+    ],
+    "hardware_writes": 0,
+    "live_ui": {
+      "fpga-power-metric": "6.88",
+      "fpga-rms": "0.238",
+      "power-metric": "6.91",
+      "meter-rms": "0.006",
+      "fpga-rms-note": "近 60 秒 · 已采 1.8 秒 / 4 点",
+      "meter-rms-note": "近 60 秒 · 已采 1.8 秒 / 4 点"
+    },
+    "passed": true,
+    "browser": "real Edge",
+    "runtime_errors": []
+  },
+  "latest_visual_verification": "20261028-notebook-ui-check.json; actual instruments were disconnected during the final style check."
+}

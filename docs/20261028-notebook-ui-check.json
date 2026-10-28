@@ -1,0 +1,37 @@
+{
+  "checks": [
+    "Without a meter: FPGA estimated power and RMS are live; optional meter fields are dashes",
+    "Independent readings with different means: steady 20mW meter gives zero RMS while FPGA fluctuates around6mW",
+    "Meter replacement resets only meter statistics; own-mean relative RMS is1%, independent of the FPGA target",
+    "Target ramp clears both RMS estimates; old step is excluded and new steady samples give zero fluctuation",
+    "30s/60s/5min selection and556/399 channel isolation preserved",
+    "Disconnecting only the meter clears its readouts while FPGA monitoring continues",
+    "Five viewport sizes have no horizontal overflow; desktop first screen includes FPGA power/RMS and target/range/apply",
+    "Unmodified local server state rendered in final page; disconnected fields are dashes; no device writes",
+    "Real pointer clicks work for plus/minus, optical parameters and device dialogs; no overlap or control submission"
+  ],
+  "hardware_writes": 0,
+  "test_data": "Injected browser-only fixtures, then unmodified local server state",
+  "timestamp": "2026-10-28T16:33:54+0800",
+  "live_ui": {
+    "fpga-power-metric": "-",
+    "fpga-rms": "-",
+    "power-metric": "-",
+    "meter-rms": "-",
+    "fpga-rms-note": "未连接",
+    "meter-rms-note": "未连接"
+  },
+  "live_connected": {
+    "fpga": false,
+    "meter": false
+  },
+  "passed": true,
+  "browser": "real Edge",
+  "runtime_errors": [],
+  "served_source_sha256": {
+    "index.html": "e1e95a7dd617925de0c8af7c1db021cb06bc8b82b20a73c226aab900076b5859",
+    "styles.css": "f573a8e1ca6a72999238d9121b147859d5868c5ff275e0e96a3e3cc3914fe5a9",
+    "app.js": "8a336c3cd3de668ac6b0a3fc53cc7fc3bd820ec8337fa44c0add51a8a49e6ff3",
+    "core.js": "b2d206f111ec2e45beadf00de5bd4775ba3c0721711e778c414a2d1031ac8f06"
+  }
+}
