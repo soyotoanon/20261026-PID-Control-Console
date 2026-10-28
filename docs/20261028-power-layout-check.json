@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "desktop_sizes": {
+    ".sidebar": {
+      "width": 176,
+      "height": 1100,
+      "bottom": 1100
+    },
+    ".control-column": {
+      "width": 432.359375,
+      "height": 1134.875,
+      "bottom": 1240.875
+    },
+    "#target-input": {
+      "width": 224.8125,
+      "height": 52,
+      "bottom": 261
+    },
+    "#target-plus": {
+      "width": 46,
+      "height": 52,
+      "bottom": 261
+    },
+    "#apply-target": {
+      "width": 386.359375,
+      "height": 48.5,
+      "bottom": 791.875
+    }
+  },
+  "widths_checked": [
+    1440,
+    1200,
+    1000,
+    901,
+    900,
+    850,
+    390
+  ],
+  "browser": "real Edge",
+  "hardware_writes": false
+}

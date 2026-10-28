@@ -34,3 +34,39 @@ h1>b{font-weight:650}.channel-tabs{display:flex;gap:10px;margin:0 0 18px}.channe
 .transmission-controls input{width:76px;min-width:0;border:1px solid #d6e2da;border-radius:5px;padding:7px;background:white;color:var(--green);font:13px Consolas,monospace}
 .transmission-controls .button{margin-left:auto;padding:6px 12px;font-size:10px}
 .transmission-setting #transmission-error{color:var(--red)}.transmission-setting #transmission-error:empty{display:none}
+
+/* Prioritize the frequently used power controls. */
+@media(min-width:1051px){
+  .sidebar{width:176px;padding:26px 12px 18px}
+  .shell{margin-left:176px}
+  .brand{gap:8px;padding:0;font-size:15px}.brandmark{width:32px;height:32px}
+  .brand-light{display:none}.brand small{font-size:9px;letter-spacing:.4px}
+  .nav-item{padding-left:12px;padding-right:12px}.sidebar-channels .channel-tab{padding:12px 10px}
+  main{max-width:1800px;padding-left:24px;padding-right:24px}
+}
+@media(min-width:901px){.dashboard-grid{grid-template-columns:minmax(0,1fr) minmax(360px,36%);gap:24px}}
+.setpoint-card>.card-heading{padding:22px 22px 0}.setpoint-card>.card-heading h2{font-size:19px}
+.setpoint-card form{padding:18px 22px 0}.setpoint-card label{font-size:12px}
+.setpoint-card .power-input-wrap{padding:8px;gap:10px;margin-top:10px}
+.setpoint-card .power-input-wrap input{font-size:36px;min-height:52px}
+.setpoint-card .power-input-wrap>span{font-size:12px}
+.setpoint-card .step-button{width:46px;height:52px;font-size:25px}
+.setpoint-card .preset-row{gap:10px;margin-top:12px}
+.setpoint-card .preset-row button{min-height:38px;font-size:12px}
+.setpoint-card .field-line{margin-top:18px}.setpoint-card .field-line input{width:76px;min-height:36px;font-size:12px}
+.setpoint-card .field-line>div{font-size:11px}.setpoint-card .setpoint-preview{font-size:11px}
+.setpoint-card .setpoint-preview strong{font-size:16px}
+.setpoint-card .primary{min-height:48px;font-size:15px;padding:12px 16px;margin-top:16px}
+.setpoint-card .setpoint-hint{font-size:10px}
+.target-range{padding:14px;margin-top:14px}.target-range-heading{font-size:12px}
+.target-range-heading button{font-size:11px;min-height:28px}.target-range-value strong{font-size:25px}
+.target-range-value>span{font-size:12px}.target-range small{font-size:11px;line-height:1.6}
+.transmission-controls input{width:104px;min-height:38px;font-size:15px}
+.transmission-controls{font-size:12px}.transmission-controls .button{min-height:38px;font-size:12px;padding:8px 16px}
+@media(max-width:900px){.dashboard-grid{grid-template-columns:1fr}.control-column{order:-1;display:flex;flex-direction:column}.control-column .calibration-note{display:none}}
+@media(max-width:600px){
+  .setpoint-card>.card-heading{padding:18px 14px 0}.setpoint-card form{padding:16px 14px 0}
+  .setpoint-card .power-input-wrap{gap:6px;padding:6px}.setpoint-card .power-input-wrap input{font-size:31px}
+  .setpoint-card .step-button{width:40px;height:46px}.target-range{padding:10px}
+  .target-range-value strong{font-size:22px}.target-range small{font-size:10px}
+}
