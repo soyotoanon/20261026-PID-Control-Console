@@ -198,6 +198,11 @@ input,select{color:var(--ink)}
 .target-range-value strong{font:22px Consolas,monospace;letter-spacing:0}
 .target-range-value>span{color:#817860}
 .target-range small{color:#7d745e;font-size:9px;line-height:1.5}
+.target-range[data-state="reference"]{background:#f5eddb;border-color:#bea06a}
+#range-status{display:block;margin-top:4px;line-height:1.5;color:#82633b}
+#range-status:empty{display:none}
+.target-range .range-recovery{margin-top:6px;min-height:25px;padding:4px 7px;font-size:10px;background:#faf7eb;border-color:#b4ad8e}
+.range-recovery[hidden]{display:none}
 .setpoint-card .primary{font-size:12px;min-height:38px;margin-top:9px;padding:8px 12px;font-weight:600;letter-spacing:.5px}
 .preset-row button{border:1px solid #c7cebd;border-radius:3px;background:#fbfbf3;color:#697960}
 .preset-row button.selected,.preset-row button:hover{background:#e6ecda;border-color:#93a57f;color:#3c5d37}

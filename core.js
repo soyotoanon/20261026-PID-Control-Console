@@ -68,7 +68,7 @@
 
   // DDS GUI amplitude is a peak parameter; measured peak = setting * 0.77.
   // RF Vpp uses the factor 2 exactly once. No extrapolation of optical data.
-  function estimateOptics556(f) {
+  function opticsCoverage556(f) {
     if (!f || ![f.dac_code, f.out_min, f.out_max].every(finite) ||
         f.out_min < 0 || f.out_max > 16383 || f.out_min >= f.out_max ||
         f.dac_code < f.out_min || f.dac_code > f.out_max) throw Error('等待有效 DAC 与限幅读回');
@@ -79,14 +79,18 @@
     const lowDac = Math.max(f.out_min, calibratedMin), highDac = Math.min(f.out_max, calibratedMax);
     if (lowDac >= highDac) throw Error('DAC 可调区间不在效率标定覆盖范围内');
     const rf = rfAt(f.dac_code), lowRF = rfAt(lowDac), highRF = rfAt(highDac);
-    if (rf < efficiency556[0].rf || rf > efficiency556.at(-1).rf) throw Error(`当前 RF ≈ ${rf.toFixed(1)} mVpp，超出效率标定 300–550 mVpp`);
+    return { rf, lowDac, highDac, lowRF, highRF, calibrated: rf >= efficiency556[0].rf && rf <= efficiency556.at(-1).rf,
+      partial: lowDac !== f.out_min || highDac !== f.out_max };
+  }
+  function estimateOptics556(f) {
+    const coverage = opticsCoverage556(f), { rf, lowRF, highRF } = coverage;
+    if (!coverage.calibrated) throw Error(`当前 RF ≈ ${rf.toFixed(1)} mVpp，超出效率标定 300–550 mVpp`);
     const efficiency = interpolate(efficiency556, rf, 'rf', 'eta');
     const eta = [interpolate(efficiency556, lowRF, 'rf', 'eta'), interpolate(efficiency556, highRF, 'rf', 'eta'),
       ...efficiency556.filter(p => p.rf > lowRF && p.rf < highRF).map(p => p.eta)];
-    return { rf, efficiency, minimum: Math.min(...eta), maximum: Math.max(...eta), lowDac, highDac,
-      partial: lowDac !== f.out_min || highDac !== f.out_max };
+    return { ...coverage, efficiency, minimum: Math.min(...eta), maximum: Math.max(...eta) };
   }
-  const api = { estimateOptics556, finite, normalizeCalibration, interpolate, toCode, toPower, estimateRange, ramp, stats, windowStats, parseCalibration };
+  const api = { opticsCoverage556, estimateOptics556, finite, normalizeCalibration, interpolate, toCode, toPower, estimateRange, ramp, stats, windowStats, parseCalibration };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.MotCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

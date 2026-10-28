@@ -12,13 +12,21 @@
     if ([value.efficiency, value.minimum, value.maximum].every(C.finite)) C.estimateRange({ ...value, reference: 10 });
   }
   function makeChannel(id) {
-    let config = defaultConfig(id), calibration = id === '556' ? C.normalizeCalibration(MOT_DEFAULT_CALIBRATION) : null, serial = '';
+    let config = defaultConfig(id), calibration = id === '556' ? C.normalizeCalibration(MOT_DEFAULT_CALIBRATION) : null, serial = '', port = '', rangeReference = null;
     try {
       const saved = JSON.parse(localStorage.getItem(`mot-pid-optics-${id}-v1`) || (id === '556' ? localStorage.getItem('mot556-optics-v1') : null) || 'null');
       if (saved) { validateConfig(saved); config = { ...config, ...saved }; }
       const savedCal = JSON.parse(localStorage.getItem(`mot-pid-calibration-${id}-v1`) || 'null');
       if (savedCal && savedCal.wavelength_nm === Number(id)) calibration = C.normalizeCalibration(savedCal);
       serial = localStorage.getItem(`mot-pid-meter-${id}`) || '';
+      const savedPort = (localStorage.getItem(`mot-pid-port-${id}`) || '').toUpperCase();
+      if (/^COM[1-9][0-9]{0,3}$/.test(savedPort)) port = savedPort;
+    } catch {}
+    try {
+      const savedRange = JSON.parse(localStorage.getItem(`mot-pid-range-${id}-v1`) || 'null');
+      if (savedRange?.channel === id && C.finite(savedRange.time) && savedRange.time <= Date.now() && typeof savedRange.context === 'string') {
+        C.estimateRange({ ...savedRange, margin: config.margin }); rangeReference = savedRange;
+      }
     } catch {}
     // Apply this newly supplied measurement once, including existing browsers.
     // Subsequent edits or an explicit blank survive reloads.
@@ -31,11 +39,12 @@
         }
       } catch {}
     }
-    return { id, config, calibration, target: id === '556' ? 10 : null, draft: id === '556' ? '10.00' : '', rate: '2.0', port: id === '556' ? 'COM8' : '', serial, chosen: false, applied: false, snapshot: null, polling: false, busy: false, history: [], window: 60, paused: false, pauseTime: 0, lastMeter: null, lastAdc: null, error: '', previousConnected: false, statsSince: { power: 0, adc: 0 }, lastTargetCode: null, wasRamping: false };
+    return { id, config, calibration, target: id === '556' ? 10 : null, draft: id === '556' ? '10.00' : '', rate: '2.0', port, serial, chosen: false, applied: false, snapshot: null, polling: false, busy: false, history: [], window: 60, paused: false, pauseTime: 0, lastMeter: null, lastAdc: null, error: '', previousConnected: false, statsSince: { power: 0, adc: 0 }, lastTargetCode: null, wasRamping: false, rangeReference, rangeCandidate: null };
   }
   const channels = { '556': makeChannel('556'), '399': makeChannel('399') };
   let channelId = '556';
   let meterDevices = [], meterScanning = false, meterScanReady = false, meterScanError = '';
+  let portDevices = [], portScanReady = false;
   const current = () => channels[channelId];
   const anyBusy = () => Object.values(channels).some(c => c.busy);
   function toast(message, bad = false) { const el = document.createElement('div'); el.className = 'toast' + (bad ? ' error' : ''); el.innerHTML = icon(bad ? 'info' : 'check') + `<span>${escape(message)}</span>`; $('toast-stack').append(el); setTimeout(() => el.remove(), 4200); }
@@ -81,6 +90,7 @@
       $('target-error').textContent = '';
     } catch (e) { $('code-preview').textContent = '-'; $('target-error').textContent = e.message; }
     all('[data-preset]').forEach(b => b.classList.toggle('selected', Number(b.dataset.preset) === n));
+    renderRange(readings(s).power);
   }
   $('target-input').addEventListener('input', () => { current().chosen = true; current().draft = $('target-input').value; preview(); });
   for (const [id, step] of [['target-minus', -.1], ['target-plus', .1]]) $(id).onclick = () => { $('target-input').value = Math.max(0, Number($('target-input').value || 0) + step).toFixed(2); current().chosen = true; current().draft = $('target-input').value; preview(); };
@@ -112,8 +122,28 @@
   all('.close-dialog').forEach(b => b.onclick = () => b.closest('dialog').close());
   all('dialog').forEach(d => d.onclick = e => { if (e.target === d) { const r = d.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) d.close(); } });
   $('nav-overview').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  function rememberPort(s) { try { localStorage.setItem(`mot-pid-port-${s.id}`, s.port); } catch {} }
+  function availablePorts(s = current()) {
+    const occupied = Object.values(channels).filter(c => c.id !== s.id && c.snapshot?.fpga?.connected).map(c => c.snapshot.fpga.port);
+    return portDevices.filter(p => !occupied.includes(p.device));
+  }
+  function renderPortOptions() {
+    const s = current(), connected = s.snapshot?.fpga?.connected, eligible = availablePorts(s);
+    if (connected) s.port = s.snapshot.fpga.port;
+    else if (portScanReady && !eligible.some(p => p.device === s.port)) s.port = eligible.length === 1 ? eligible[0].device : '';
+    const choices = [...eligible];
+    if (connected && !choices.some(p => p.device === s.port)) choices.push({ device: s.port, description: '本路已连接' });
+    $('serial-ports').innerHTML = choices.map(p => `<option value="${escape(p.device)}">${escape(p.description)}</option>`).join('');
+    $('serial-port').value = s.port;
+    $('service-state').textContent = connected ? `本机服务就绪 · FPGA 已连接 ${s.port}` : !portDevices.length ? '本机服务就绪 · 未发现串口，请检查 USB 连接' : `本机服务就绪 · 发现 ${portDevices.length} 个串口` + (s.port ? ` · 已选 ${s.port}` : eligible.length ? ' · 请选择 FPGA 串口' : ' · 串口已被另一光路使用');
+  }
+  async function refreshPorts(id = channelId) {
+    const value = await api('/api/ports', undefined, id);
+    if (!Array.isArray(value.ports)) throw Error('本机服务没有返回有效串口列表');
+    portDevices = value.ports; portScanReady = true; renderPortOptions();
+  }
   async function inspectService() {
-    try { const value = await api('/api/ports'); $('serial-ports').innerHTML = value.ports.map(p => `<option value="${escape(p.device)}">${escape(p.description)}</option>`).join(''); $('service-state').textContent = `本机服务就绪 · 发现 ${value.ports.length} 个串口`; }
+    try { await refreshPorts(); }
     catch (e) { $('service-state').textContent = e.message; }
   }
   function rememberMeter(s) { try { localStorage.setItem(`mot-pid-meter-${s.id}`, s.serial); } catch {} }
@@ -145,15 +175,19 @@
   }
   function openConnect() { const s = current(); $('serial-port').value = s.port; renderMeterOptions(); $('connection-error').textContent = ''; $('connection-feedback').textContent = `${channelId} nm · 连接后设置功率计波长，不自动应用目标。`; $('connect-dialog').showModal(); inspectService(); scanMeters(); }
   ['connect-button', 'nav-devices'].forEach(id => $(id).onclick = openConnect); $('refresh-ports').onclick = inspectService;
-  $('serial-port').addEventListener('input', () => { current().port = $('serial-port').value.trim(); });
+  $('serial-port').addEventListener('input', () => { current().port = $('serial-port').value.trim().toUpperCase(); });
   $('refresh-meters').onclick = scanMeters;
   $('meter-serial').addEventListener('change', () => { current().serial = $('meter-serial').value; rememberMeter(current()); render(); });
   async function connect(kind) {
     if (anyBusy()) return; const s = current(), id = channelId;
-    s.port = $('serial-port').value.trim(); s.serial = $('meter-serial').value.trim(); s.busy = true;
+    s.port = $('serial-port').value.trim().toUpperCase(); s.serial = $('meter-serial').value.trim(); s.busy = true;
     $('connection-error').textContent = ''; $('connection-feedback').textContent = '正在连接并读取设备…'; render();
     try {
       const connected = kind === 'fpga' ? s.snapshot?.fpga.connected : s.snapshot?.meter.connected;
+      if (kind === 'fpga' && !connected) {
+        await refreshPorts(id);
+        if (!s.port) throw Error(availablePorts(s).length ? '检测到多个可用串口，请选择 FPGA 对应的串口' : portDevices.length ? '串口已被另一光路使用，请先断开原通道' : '未发现串口，请检查 FPGA 的 USB 连接后刷新');
+      }
       const value = connected ? await api(`/api/disconnect/${kind}`, {}, id) : await api(`/api/connect/${kind}`, kind === 'fpga' ? { port: s.port } : { serial: s.serial }, id);
       accept(value.state, id); $('connection-feedback').textContent = connected ? '设备已断开，相关读数已清空。' : kind === 'fpga' ? `${id} nm FPGA 已连接，未自动修改目标。` : `功率计已连接，${id} nm 已回读。`;
       if (kind === 'meter') { rememberMeter(s); meterDevices = meterDevices.map(d => d.serial === s.serial ? { ...d, connected_channel: connected ? null : id } : d); renderMeterOptions(); }
@@ -176,6 +210,10 @@
       if (!fresh(device) || !fresh(old) || deviceId !== oldId || device.sampled_at - old.sampled_at > 2500 || device.sampled_at < old.sampled_at) s.statsSince[key] = now;
     }
     const meterChanged = !!m.connected !== !!s.snapshot?.meter?.connected || m.identity?.serial !== s.snapshot?.meter?.identity?.serial;
+    if (f.connected && (s.port !== f.port || !s.previousConnected)) {
+      s.port = f.port; rememberPort(s);
+      if (id === channelId) $('serial-port').value = s.port;
+    }
     if (f.connected && !s.previousConnected) {
       if (!s.chosen && s.calibration) { try { s.target = C.toPower(s.calibration, f.setpoint_code); s.draft = s.target.toFixed(2); s.applied = true; if (id === channelId) { $('target-input').value = s.draft; preview(); } } catch {} }
       else s.applied = false;
@@ -196,10 +234,21 @@
   }
   function opticalConfig(s = current()) {
     if (s.id !== '556') return { ...s.config };
+    let coverage = {};
     try {
       if (!fresh(s.snapshot?.fpga)) throw Error('等待 FPGA 实时 DAC 读数');
+      coverage = C.opticsCoverage556(s.snapshot.fpga);
       return { ...s.config, ...C.estimateOptics556(s.snapshot.fpga), automatic: true };
-    } catch (e) { return { ...s.config, efficiency: null, minimum: null, maximum: null, automatic: true, error: e.message }; }
+    } catch (e) { return { ...s.config, ...coverage, efficiency: null, minimum: null, maximum: null, automatic: true, error: e.message }; }
+  }
+  function clearRangeReference(s) {
+    s.rangeReference = null; s.rangeCandidate = null;
+    try { localStorage.removeItem(`mot-pid-range-${s.id}-v1`); } catch {}
+  }
+  function rangeContext(s) {
+    const f = s.snapshot?.fpga, m = s.snapshot?.meter;
+    return JSON.stringify([s.id, f?.port, f?.firmware, f?.out_min, f?.out_max, m?.identity?.serial, s.config.transmission,
+      s.id === '399' ? [s.config.efficiency, s.config.minimum, s.config.maximum] : null]);
   }
   function openParameters() { const s = current(), config = opticalConfig(s); Object.keys(s.config).forEach(k => { const field = $('range-form').elements[k]; field.value = config[k] ?? ''; field.readOnly = s.id === '556' && ['efficiency','minimum','maximum'].includes(k); }); $('range-error').textContent = ''; $('range-dialog').showModal(); }
   $('range-settings').onclick = openParameters; $('nav-parameters').onclick = openParameters;
@@ -210,7 +259,7 @@
       if (transmission !== null && (!C.finite(transmission) || transmission <= 0 || transmission > 100)) throw Error('透过率应大于 0 且不超过 100%，未知可留空');
       const next = { ...s.config, transmission };
       localStorage.setItem(`mot-pid-optics-${s.id}-v1`, JSON.stringify(next));
-      s.config = next; $('transmission-error').textContent = ''; render();
+      s.config = next; clearRangeReference(s); $('transmission-error').textContent = ''; render();
       toast(transmission === null ? '透过率已清空，显示未校正的等效功率' : `${s.id} nm 下游透过率已保存：${fmt(transmission)}%`);
     } catch (e) { $('transmission-error').textContent = e.message; }
   }
@@ -220,7 +269,7 @@
   $('range-form').onsubmit = e => {
     e.preventDefault(); const s = current(), f = e.currentTarget;
     const next = Object.fromEntries(Object.keys(s.config).map(k => [k, !f.elements[k].value.trim() ? null : Number(f.elements[k].value)]));
-    try { validateConfig(next); s.config = next; try { localStorage.setItem(`mot-pid-optics-${channelId}-v1`, JSON.stringify(next)); } catch {} $('transmission-input').value = C.finite(next.transmission) ? fmt(next.transmission) : ''; $('transmission-error').textContent = ''; $('range-dialog').close(); toast(`${channelId} nm 光路参数已保存`); render(); }
+    try { validateConfig(next); s.config = next; clearRangeReference(s); try { localStorage.setItem(`mot-pid-optics-${channelId}-v1`, JSON.stringify(next)); } catch {} $('transmission-input').value = C.finite(next.transmission) ? fmt(next.transmission) : ''; $('transmission-error').textContent = ''; $('range-dialog').close(); toast(`${channelId} nm 光路参数已保存`); render(); }
     catch (err) { $('range-error').textContent = err.message; }
   };
   $('channel-calibration-file').onchange = async event => {
@@ -230,14 +279,26 @@
       if (file.size > 2000000) throw Error('标定文件不能大于 2 MB');
       const input = JSON.parse((await file.text()).replace(/^\uFEFF/, ''));
       if (input.wavelength_nm !== Number(id)) throw Error(`标定文件须声明 wavelength_nm: ${id}，不能跨通道复用`);
-      const calibration = C.normalizeCalibration(input); s.calibration = calibration; s.history = []; s.lastAdc = null; s.lastMeter = null;
+      const calibration = C.normalizeCalibration(input); s.calibration = calibration; s.history = []; s.lastAdc = null; s.lastMeter = null; clearRangeReference(s);
       try { localStorage.setItem(`mot-pid-calibration-${id}-v1`, JSON.stringify(calibration)); } catch {}
       loadControls(); render(); toast(`${id} nm 标定已载入，未修改设备目标`);
     } catch (e) { toast(e.message, true); } finally { event.target.value = ''; }
   };
   function renderRange(power) {
-    const s = current(), config = opticalConfig(s); let range = null;
-    if (C.finite(power) && power > 0) { try { range = C.estimateRange({ ...config, reference: power }); } catch {} }
+    const s = current(), config = opticalConfig(s), f = s.snapshot?.fpga, m = s.snapshot?.meter, context = rangeContext(s);
+    let range = null, historical = false, reason = config.error || '等待功率计与本路效率参数';
+    if (C.finite(power) && power > 0) { try { range = C.estimateRange({ ...config, reference: power }); } catch (e) { reason = config.error || e.message; } }
+    if (range && !f?.ramp) {
+      const time = m.sampled_at;
+      if (s.rangeReference?.time !== time || s.rangeReference?.context !== context) {
+        s.rangeReference = { channel: s.id, context, time, reference: power, efficiency: config.efficiency, minimum: config.minimum, maximum: config.maximum };
+        try { localStorage.setItem(`mot-pid-range-${s.id}-v1`, JSON.stringify(s.rangeReference)); } catch {}
+      }
+    } else if (!range && C.finite(power) && power > 0 && fresh(f) && s.rangeReference?.context === context) {
+      try { range = C.estimateRange({ ...s.rangeReference, margin: s.config.margin }); historical = true; } catch {}
+    }
+    if (!C.finite(power)) reason = '等待功率计读数';
+    else if (power <= 0) reason = '功率计读数需大于 0';
     const hasTransmission = C.finite(config.transmission) && config.transmission > 0 && config.transmission <= 100;
     const equivalent = C.finite(power) && power >= 0 && C.finite(config.efficiency) && config.efficiency > 0 ? power / (config.efficiency / 100) : null;
     const upstream = C.finite(equivalent) ? hasTransmission ? equivalent / (config.transmission / 100) : equivalent : null;
@@ -245,14 +306,35 @@
     $('upstream-tag').textContent = hasTransmission ? '估算' : '未校正';
     $('upstream-metric').textContent = fmt(upstream);
     $('upstream-note').textContent = !C.finite(power) ? '等待功率计读数' : !C.finite(equivalent) ? config.error || '等待衍射效率' : hasTransmission ? `η ${fmt(config.efficiency)}% · T ${fmt(config.transmission)}%` : 'P/η · 未校正下游损耗，实际入射功率需再除以 T';
+    $('range-heading').textContent = historical ? '上次有效范围（参考）' : config.partial ? '已标定可调范围' : '可调范围（估算）';
+    $('range-values').closest('.target-range').dataset.state = historical ? 'reference' : range ? 'live' : 'unavailable';
     $('range-values').innerHTML = range ? `${fmt(range.low)} <span>–</span> ${fmt(range.high)}` : '-';
-    $('range-recommend').textContent = range ? `建议稳定区间 ${fmt(range.recommendedLow)}–${fmt(range.recommendedHigh)} mW` : '建议稳定区间 -';
-    $('range-target-label').textContent = range && C.finite(s.target) ? (s.target < range.low || s.target > range.high ? '当前目标超出估算范围' : '') : '';
+    $('range-recommend').textContent = range ? `${historical ? '参考区间' : '建议稳定区间'} ${fmt(range.recommendedLow)}–${fmt(range.recommendedHigh)} mW` : '尚无有效功率范围';
+    const draft = $('target-input').value.trim(), target = draft ? Number(draft) : s.target;
+    $('range-target-label').textContent = range && C.finite(target) && (target < range.low || target > range.high) ? `输入目标超出${historical ? '参考' : '已标定'}范围` : '';
+    const recordedAt = historical ? new Date(s.rangeReference.time).toLocaleString('zh-CN', { timeZone: 'Asia/Hong_Kong', hour12: false }) : '';
+    let guidance = '';
+    if (!range && config.calibrated === false && C.finite(power)) guidance = config.rf < config.lowRF ? `；请小步提高目标，使 DAC 回到 ${config.lowDac} 以上后重算` : `；需回到 DAC ${config.lowDac}–${config.highDac} 的标定区间`;
+    $('range-status').textContent = historical ? `${reason}；保留 ${recordedAt} 的估算，光路变化后需重新测量。` : range ? '' : reason + guidance;
+    s.rangeCandidate = null;
+    if (range && s.calibration) {
+      const low = Math.ceil(Math.max(range.recommendedLow, s.calibration.points[0].power_mw) * 100), high = Math.floor(Math.min(range.recommendedHigh, s.calibration.points.at(-1).power_mw) * 100);
+      if (low <= high) s.rangeCandidate = Math.round((low + high) / 2) / 100;
+    }
+    $('use-range-target').hidden = !C.finite(s.rangeCandidate);
+    $('use-range-target').disabled = anyBusy();
+    $('use-range-target').textContent = `填入${historical ? '参考' : '区间中'}值 ${fmt(s.rangeCandidate)} mW`;
     $('range-note').textContent = range ? config.automatic ?
       `RF ≈ ${fmt(config.rf)} mVpp · η ≈ ${fmt(config.efficiency)}% · 标定覆盖 DAC ${config.lowDac}–${config.highDac}${config.partial ? '（部分范围，未外推）' : ''}；按当前光路透过率不变估算。` :
-      `按实测功率和手填效率估算；改变 RF 后须更新效率。` : config.error || '等待功率计与本路效率参数';
+      `按实测功率和手填效率估算；改变 RF 后须更新效率。` : reason;
+    if (historical) $('range-note').textContent = `使用上次有效功率及效率估算，不对当前 RF 外推。记录时间 ${recordedAt}。填入参考值只修改输入框，点击应用后才下发。`;
     if (config.automatic) $('efficiency-detail').innerHTML = C.finite(config.efficiency) ? `${fmt(config.efficiency)}% <small>DAC → RF → 实测曲线</small>` : `<small>${escape(config.error || '等待有效 DAC 读数')}</small>`;
   }
+  $('use-range-target').onclick = () => {
+    const s = current(); if (!C.finite(s.rangeCandidate) || anyBusy()) return;
+    $('target-input').value = fmt(s.rangeCandidate); s.draft = $('target-input').value; s.chosen = true; preview();
+    toast(`已填入 ${s.draft} mW；点击“应用目标功率”后生效`);
+  };
   function statusText(status) { const a = [[1, '丢光'], [2, 'ADC 过量程历史标志'], [4, '输出饱和'], [8, '积分到限'], [16, '反馈冻结'], [32, 'ADC 时钟停止']].filter(([b]) => status & b).map(([, s]) => s); return a.length ? a.join(' / ') : '正常'; }
   function render() {
     const s = current(), config = s.config, cal = s.calibration, r = readings(s), f = r.f, m = r.m, busy = anyBusy();
@@ -284,6 +366,7 @@
     $('fpga-dot').classList.toggle('connected', r.fpgaLive); $('pm-dot').classList.toggle('connected', r.meterLive);
     $('fpga-strip').textContent = f?.connected ? f.port + (r.fpgaLive ? ' · 已连接' : ' · 数据过期') : '未连接'; $('pm-strip').textContent = m?.connected ? (m.identity?.model || 'Thorlabs') + (r.meterLive ? ` · ${channelId} nm` : ' · 等待读数') : '未连接'; $('last-update').textContent = r.meterLive || r.fpgaLive ? '数据更新中' : '尚无设备读数';
     $('connect-fpga').textContent = f?.connected ? '断开 FPGA' : '连接 FPGA'; $('connect-meter').textContent = m?.connected ? '断开功率计' : '连接功率计'; $('connect-fpga').disabled = busy; $('connect-meter').disabled = busy || (!m?.connected && (!s.serial || meterScanning));
+    $('serial-port').disabled = busy || !!f?.connected; $('refresh-ports').disabled = busy;
     $('meter-serial').disabled = busy || meterScanning || !!m?.connected; $('refresh-meters').disabled = busy || meterScanning;
     renderStability(r); renderRange(r.power); if (!s.paused) renderChart();
   }

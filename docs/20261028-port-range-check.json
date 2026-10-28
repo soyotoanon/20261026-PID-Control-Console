@@ -1,0 +1,140 @@
+{
+  "checks": [
+    "Stale saved COM8 replaced by the sole available COM9; connect uses COM9 and persists verified readback",
+    "Actual connected port from polling overrides stale UI selection",
+    "Port owned by556 cannot be automatically selected or opened for399",
+    "Multiple ports require selection; failed connection is not remembered; successful lowercase selection normalizes toCOM11",
+    "Draft outside range does not clear it; RF below calibration retains marked last valid range; fill button changes only draft, no target POST",
+    "Last valid range survives page reload with timestamp and reference label; current AOM input stays unknown outside calibration",
+    "Changed meter invalidates historical range; without a valid reference, visible RF boundary and recovery direction replace silent blank",
+    "Meter disconnect clears current range;556/399 references remain isolated",
+    "Target, range, fill-reference and apply buttons remain in first screen at4 viewport sizes",
+    "Returning to calibrated RF automatically restores live range and live AOM estimate",
+    "Real COM9 FPGA and PM100USB remain connected; live page shows actual port and telemetry after all fixtures removed"
+  ],
+  "hardware_control_writes": 0,
+  "real_before": {
+    "wavelength_nm": 556,
+    "fpga": {
+      "connected": true,
+      "port": "COM9",
+      "firmware": "A623",
+      "adc_code": 9038,
+      "dac_code": 5496,
+      "setpoint_code": 9029,
+      "pi_enabled": true,
+      "ctrl": 1,
+      "status": 2,
+      "armed": true,
+      "sampled_at": 1793200103820.312,
+      "error": "",
+      "ramp": null,
+      "kp_register": 8,
+      "ki_register": 12,
+      "out_min": 1400,
+      "out_max": 15000,
+      "hardware_slew": 1
+    },
+    "meter": {
+      "connected": true,
+      "sampled_at": 1793200103820.312,
+      "power_mw": 6.35008048,
+      "identity": {
+        "model": "PM100USB",
+        "serial": "P2007293",
+        "resource": "USB0::0x1313::0x8072::P2007293::INSTR",
+        "wavelength_nm": 556.0,
+        "unit": "W",
+        "driver": "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\TLPMX_64.dll"
+      },
+      "error": ""
+    }
+  },
+  "fixture_posts": [
+    {
+      "path": "/api/connect/fpga",
+      "channel": "556",
+      "body": {
+        "port": "COM9"
+      }
+    },
+    {
+      "path": "/api/disconnect/fpga",
+      "channel": "556",
+      "body": {}
+    },
+    {
+      "path": "/api/connect/fpga",
+      "channel": "556",
+      "body": {
+        "port": "COM11"
+      }
+    },
+    {
+      "path": "/api/connect/fpga",
+      "channel": "556",
+      "body": {
+        "port": "COM11"
+      }
+    }
+  ],
+  "real_ui": {
+    "fpga-power-metric": "6.27",
+    "fpga-rms": "0.270",
+    "power-metric": "6.34",
+    "meter-rms": "0.008",
+    "range-values": "5.30 – 9.14",
+    "range-heading": "已标定可调范围",
+    "range-status": ""
+  },
+  "real_after": {
+    "wavelength_nm": 556,
+    "fpga": {
+      "connected": true,
+      "port": "COM9",
+      "firmware": "A623",
+      "adc_code": 9016,
+      "dac_code": 5630,
+      "setpoint_code": 9029,
+      "pi_enabled": true,
+      "ctrl": 1,
+      "status": 2,
+      "armed": true,
+      "sampled_at": 1793200116099.314,
+      "error": "",
+      "ramp": null,
+      "kp_register": 8,
+      "ki_register": 12,
+      "out_min": 1400,
+      "out_max": 15000,
+      "hardware_slew": 1
+    },
+    "meter": {
+      "connected": true,
+      "sampled_at": 1793200116131.371,
+      "power_mw": 6.35511801,
+      "identity": {
+        "model": "PM100USB",
+        "serial": "P2007293",
+        "resource": "USB0::0x1313::0x8072::P2007293::INSTR",
+        "wavelength_nm": 556.0,
+        "unit": "W",
+        "driver": "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\TLPMX_64.dll"
+      },
+      "error": ""
+    }
+  },
+  "passed": true,
+  "runtime_errors": [],
+  "test_data": "Browser-only API fixtures; final phase uses actual local service with no control POSTs",
+  "served_source_sha256": {
+    "index.html": "5a71eba7b76825a58f57a3e4343cd84de5c5ad3f669b6fc801f5ba4ab699fab4",
+    "styles.css": "f01e052eebea67960c4c08bb47d6354829c3b7b6bdb62a56f0c13140a47bcabb",
+    "app.js": "11317014524375823146ce29ce639c0bf285a101b47a38018b04ca1b3344e7d5",
+    "core.js": "e9c59b45fc8876b06b9bd7c4b869d5bf6cf14f5efc7b5054f9d549f7c4caca8a"
+  },
+  "root_causes": [
+    "Windows enumerated the FPGA UART as COM9 while the old UI retained COM8.",
+    "Current RF outside300-550mVpp made current efficiency unavailable; the old UI then removed the entire adjustable range."
+  ]
+}
