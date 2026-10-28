@@ -61,7 +61,7 @@ class ChannelTests(unittest.TestCase):
         for wave in (556, 399):
             c = Controller(wave)
             try:
-                with patch('pm_driver.PM100D', Meter):
+                with patch('pm_driver.ThorlabsPowerMeter', Meter):
                     c.connect_meter('TEST_ONLY')
                     self.assertEqual(c.snapshot()['meter']['identity']['wavelength_nm'], wave)
             finally:

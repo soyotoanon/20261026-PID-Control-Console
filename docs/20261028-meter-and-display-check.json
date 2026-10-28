@@ -1,0 +1,895 @@
+{
+  "date": "2026-10-28",
+  "unit_tests_passed": 11,
+  "real_meter_browser_verification": {
+    "fpga_before": {
+      "connected": true,
+      "port": "COM8",
+      "firmware": "A624",
+      "adc_code": 9290,
+      "dac_code": 13963,
+      "setpoint_code": 9291,
+      "pi_enabled": true,
+      "ctrl": 1,
+      "status": 0,
+      "armed": true,
+      "sampled_at": 1793169898496.0945,
+      "error": "",
+      "ramp": null,
+      "kp_register": 35072,
+      "ki_register": 50463,
+      "out_min": 1400,
+      "out_max": 15000,
+      "hardware_slew": 1
+    },
+    "checks": [
+      "No devices: empty selection, connect disabled",
+      "Both model labels available, multiple devices require choice, previous selection retained on reload",
+      "Other-channel device disabled; only available device auto-selected",
+      "Actual PM100USB connected through browser; 556 nm and watts read back; live mW rendered",
+      "Scanning while connected preserves measurements and displays actual model",
+      "Disconnect clears measured power, estimated incident power and range",
+      "Reconnected successfully; six fresh samples and incident/range estimates displayed"
+    ],
+    "real_meter": {
+      "connected": true,
+      "sampled_at": 1793169900358.7932,
+      "power_mw": 8.49356968,
+      "identity": {
+        "model": "PM100USB",
+        "serial": "P2007293",
+        "resource": "USB0::0x1313::0x8072::P2007293::INSTR",
+        "wavelength_nm": 556.0,
+        "unit": "W",
+        "driver": "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\TLPMX_64.dll"
+      },
+      "error": ""
+    },
+    "readings": [
+      {
+        "connected": true,
+        "sampled_at": 1793169901163.0872,
+        "power_mw": 8.49356968,
+        "identity": {
+          "model": "PM100USB",
+          "serial": "P2007293",
+          "resource": "USB0::0x1313::0x8072::P2007293::INSTR",
+          "wavelength_nm": 556.0,
+          "unit": "W",
+          "driver": "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\TLPMX_64.dll"
+        },
+        "error": ""
+      },
+      {
+        "connected": true,
+        "sampled_at": 1793169901607.0496,
+        "power_mw": 8.49247444,
+        "identity": {
+          "model": "PM100USB",
+          "serial": "P2007293",
+          "resource": "USB0::0x1313::0x8072::P2007293::INSTR",
+          "wavelength_nm": 556.0,
+          "unit": "W",
+          "driver": "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\TLPMX_64.dll"
+        },
+        "error": ""
+      },
+      {
+        "connected": true,
+        "sampled_at": 1793169901824.5315,
+        "power_mw": 8.49137921,
+        "identity": {
+          "model": "PM100USB",
+          "serial": "P2007293",
+          "resource": "USB0::0x1313::0x8072::P2007293::INSTR",
+          "wavelength_nm": 556.0,
+          "unit": "W",
+          "driver": "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\TLPMX_64.dll"
+        },
+        "error": ""
+      },
+      {
+        "connected": true,
+        "sampled_at": 1793169902059.6194,
+        "power_mw": 8.49356968,
+        "identity": {
+          "model": "PM100USB",
+          "serial": "P2007293",
+          "resource": "USB0::0x1313::0x8072::P2007293::INSTR",
+          "wavelength_nm": 556.0,
+          "unit": "W",
+          "driver": "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\TLPMX_64.dll"
+        },
+        "error": ""
+      },
+      {
+        "connected": true,
+        "sampled_at": 1793169902511.345,
+        "power_mw": 8.49137921,
+        "identity": {
+          "model": "PM100USB",
+          "serial": "P2007293",
+          "resource": "USB0::0x1313::0x8072::P2007293::INSTR",
+          "wavelength_nm": 556.0,
+          "unit": "W",
+          "driver": "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\TLPMX_64.dll"
+        },
+        "error": ""
+      },
+      {
+        "connected": true,
+        "sampled_at": 1793169902735.1426,
+        "power_mw": 8.49181693,
+        "identity": {
+          "model": "PM100USB",
+          "serial": "P2007293",
+          "resource": "USB0::0x1313::0x8072::P2007293::INSTR",
+          "wavelength_nm": 556.0,
+          "unit": "W",
+          "driver": "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\TLPMX_64.dll"
+        },
+        "error": ""
+      }
+    ],
+    "fpga_after": {
+      "connected": true,
+      "port": "COM8",
+      "firmware": "A624",
+      "adc_code": 9292,
+      "dac_code": 14303,
+      "setpoint_code": 9291,
+      "pi_enabled": true,
+      "ctrl": 1,
+      "status": 0,
+      "armed": true,
+      "sampled_at": 1793169902732.9194,
+      "error": "",
+      "ramp": null,
+      "kp_register": 35072,
+      "ki_register": 50463,
+      "out_min": 1400,
+      "out_max": 15000,
+      "hardware_slew": 1
+    },
+    "passed": true,
+    "browser": "real Edge",
+    "fpga_settings_unchanged": true,
+    "browser_posts": [
+      "http://127.0.0.1:8766/api/connect/meter?channel=556",
+      "http://127.0.0.1:8766/api/disconnect/meter?channel=556",
+      "http://127.0.0.1:8766/api/connect/meter?channel=556"
+    ],
+    "errors": []
+  },
+  "display": {
+    "update_interval_s": 0.1,
+    "sample_policy": "single fresh ADC sample; no averaging",
+    "display_id": "5031",
+    "pi_firmware_id": "A624",
+    "flash_written": false,
+    "bitstream_sha256": "9c3beed515a4b0b9c887ab23f888c72a4bf4c62c686da6cf9cbd8e8428558b15",
+    "setup_slack_ns": 0.002,
+    "hold_slack_ns": 0.062,
+    "static_configuration_restored": true,
+    "target_adc_at_restore": 9118,
+    "live_readback": {
+      "passed": true,
+      "rows": [
+        {
+          "time_s": 0.0,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9124,
+          "dac": 8855,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.046,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9116,
+          "dac": 8629,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.093,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9119,
+          "dac": 8715,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.14,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9118,
+          "dac": 8703,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.187,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9121,
+          "dac": 8749,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.234,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9119,
+          "dac": 8675,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.281,
+          "display": "07.0422",
+          "valid": true,
+          "adc": 9116,
+          "dac": 8639,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.328,
+          "display": "07.0422",
+          "valid": true,
+          "adc": 9119,
+          "dac": 8829,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.375,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9122,
+          "dac": 8634,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.421,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9117,
+          "dac": 8964,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.468,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9120,
+          "dac": 8653,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.515,
+          "display": "07.0081",
+          "valid": true,
+          "adc": 9118,
+          "dac": 9013,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.562,
+          "display": "07.0081",
+          "valid": true,
+          "adc": 9128,
+          "dac": 8761,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.609,
+          "display": "07.0336",
+          "valid": true,
+          "adc": 9118,
+          "dac": 8608,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.656,
+          "display": "07.0336",
+          "valid": true,
+          "adc": 9115,
+          "dac": 8932,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.703,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9113,
+          "dac": 8877,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.75,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9119,
+          "dac": 8709,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.796,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9118,
+          "dac": 8800,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.843,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9124,
+          "dac": 8945,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.89,
+          "display": "07.0081",
+          "valid": true,
+          "adc": 9121,
+          "dac": 8959,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 0.953,
+          "display": "07.0081",
+          "valid": true,
+          "adc": 9119,
+          "dac": 8635,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.0,
+          "display": "06.9911",
+          "valid": true,
+          "adc": 9118,
+          "dac": 8842,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.046,
+          "display": "06.9911",
+          "valid": true,
+          "adc": 9117,
+          "dac": 8705,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.093,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9121,
+          "dac": 8819,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.14,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9119,
+          "dac": 8631,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.187,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9116,
+          "dac": 8816,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.234,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9118,
+          "dac": 8726,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.281,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9117,
+          "dac": 8988,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.328,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9119,
+          "dac": 8682,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.375,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9123,
+          "dac": 8715,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.406,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9116,
+          "dac": 8631,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.453,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9115,
+          "dac": 8812,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.5,
+          "display": "07.0081",
+          "valid": true,
+          "adc": 9117,
+          "dac": 8665,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.562,
+          "display": "07.0081",
+          "valid": true,
+          "adc": 9115,
+          "dac": 8723,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.609,
+          "display": "07.0166",
+          "valid": true,
+          "adc": 9121,
+          "dac": 8688,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.656,
+          "display": "07.0166",
+          "valid": true,
+          "adc": 9119,
+          "dac": 8618,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.687,
+          "display": "07.0847",
+          "valid": true,
+          "adc": 9122,
+          "dac": 8595,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.75,
+          "display": "07.0847",
+          "valid": true,
+          "adc": 9124,
+          "dac": 8674,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.796,
+          "display": "06.9570",
+          "valid": true,
+          "adc": 9123,
+          "dac": 8685,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.828,
+          "display": "06.9570",
+          "valid": true,
+          "adc": 9117,
+          "dac": 8633,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.875,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9113,
+          "dac": 8727,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.921,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9117,
+          "dac": 8620,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 1.968,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9120,
+          "dac": 8635,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.031,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9121,
+          "dac": 8690,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.062,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9115,
+          "dac": 8666,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.125,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9122,
+          "dac": 8865,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.171,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9122,
+          "dac": 8673,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.203,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9120,
+          "dac": 8662,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.265,
+          "display": "06.9826",
+          "valid": true,
+          "adc": 9125,
+          "dac": 8892,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.312,
+          "display": "06.9655",
+          "valid": true,
+          "adc": 9113,
+          "dac": 8750,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.359,
+          "display": "06.9655",
+          "valid": true,
+          "adc": 9111,
+          "dac": 8706,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.406,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9122,
+          "dac": 8677,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.453,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9122,
+          "dac": 8578,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.5,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9117,
+          "dac": 8598,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.546,
+          "display": "06.9740",
+          "valid": true,
+          "adc": 9121,
+          "dac": 8619,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.578,
+          "display": "07.0166",
+          "valid": true,
+          "adc": 9122,
+          "dac": 8712,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.64,
+          "display": "07.0166",
+          "valid": true,
+          "adc": 9113,
+          "dac": 8966,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.687,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9116,
+          "dac": 8723,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.718,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9121,
+          "dac": 8751,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.781,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9119,
+          "dac": 8604,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.828,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9116,
+          "dac": 8634,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.875,
+          "display": "06.9996",
+          "valid": true,
+          "adc": 9115,
+          "dac": 8764,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.921,
+          "display": "07.0932",
+          "valid": true,
+          "adc": 9116,
+          "dac": 8858,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 2.968,
+          "display": "07.0932",
+          "valid": true,
+          "adc": 9120,
+          "dac": 8734,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 3.015,
+          "display": "06.9911",
+          "valid": true,
+          "adc": 9117,
+          "dac": 8719,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 3.062,
+          "display": "06.9911",
+          "valid": true,
+          "adc": 9123,
+          "dac": 8651,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 3.109,
+          "display": "07.0336",
+          "valid": true,
+          "adc": 9118,
+          "dac": 8570,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 3.156,
+          "display": "07.0336",
+          "valid": true,
+          "adc": 9119,
+          "dac": 8618,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 3.203,
+          "display": "06.9911",
+          "valid": true,
+          "adc": 9120,
+          "dac": 8900,
+          "target": 9118,
+          "status": 2
+        },
+        {
+          "time_s": 3.25,
+          "display": "06.9911",
+          "valid": true,
+          "adc": 9118,
+          "dac": 8598,
+          "target": 9118,
+          "status": 2
+        }
+      ],
+      "unique_displays": [
+        "06.9570",
+        "06.9655",
+        "06.9740",
+        "06.9826",
+        "06.9911",
+        "06.9996",
+        "07.0081",
+        "07.0166",
+        "07.0336",
+        "07.0422",
+        "07.0847",
+        "07.0932"
+      ],
+      "display_revision": "5031",
+      "target_preserved": true,
+      "historical_otr": true,
+      "register_writes": 0,
+      "final_state": {
+        "wavelength_nm": 556,
+        "fpga": {
+          "connected": true,
+          "port": "COM8",
+          "firmware": "A624",
+          "adc_code": 9118,
+          "dac_code": 8912,
+          "setpoint_code": 9118,
+          "pi_enabled": true,
+          "ctrl": 1,
+          "status": 2,
+          "armed": true,
+          "sampled_at": 1793170929390.9983,
+          "error": "",
+          "ramp": null,
+          "kp_register": 35072,
+          "ki_register": 50463,
+          "out_min": 1400,
+          "out_max": 15000,
+          "hardware_slew": 1
+        },
+        "meter": {
+          "connected": true,
+          "sampled_at": 1793170929247.9126,
+          "power_mw": 7.029969250000001,
+          "identity": {
+            "model": "PM100USB",
+            "serial": "P2007293",
+            "resource": "USB0::0x1313::0x8072::P2007293::INSTR",
+            "wavelength_nm": 556.0,
+            "unit": "W",
+            "driver": "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\TLPMX_64.dll"
+          },
+          "error": ""
+        }
+      }
+    },
+    "fresh_fault_checks": [
+      {
+        "label": "held_output_current_otr_check",
+        "status": 2,
+        "count": 8192,
+        "sequence": 1
+      },
+      {
+        "label": "closed_loop_current_otr_check",
+        "status": 2,
+        "count": 8192,
+        "sequence": 2
+      },
+      {
+        "label": "closed_loop_current_otr_check",
+        "status": 2,
+        "count": 8192,
+        "sequence": 3
+      },
+      {
+        "label": "closed_loop_current_otr_check",
+        "status": 2,
+        "count": 8192,
+        "sequence": 4
+      }
+    ],
+    "historical_otr_flag": true,
+    "historical_otr_note": "RAM configuration latched OTR; four new captures (8192 samples each) passed without live fault/clip. Existing ADC driver sticky bit requires reset to clear. PI was restored after these checks.",
+    "dynamic_integral_history_restored": false
+  }
+}

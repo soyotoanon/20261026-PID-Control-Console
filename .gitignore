@@ -6,3 +6,12 @@ __pycache__/
 *.log
 .DS_Store
 Thumbs.db
+
+# Local Vivado build products; the validated .bit is intentionally versioned.
+firmware/**/build/
+firmware/**/.Xil/
+firmware/**/*.jou
+firmware/**/*.log
+firmware/**/*.mcs
+firmware/**/*.prm
+firmware/**/usage_statistics_webtalk.*

@@ -20,7 +20,7 @@ from urllib.parse import urlparse, parse_qs
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "vendor"))
 APP = "mot556-console"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 
 def number(value, name):
@@ -174,8 +174,8 @@ class Controller:
                 raise ValueError("功率计已连接，请先断开再切换设备")
             if not isinstance(serial, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", serial):
                 raise ValueError("请填写仪器的有效序列号")
-            from pm_driver import PM100D
-            device = PM100D(serial=serial, wavelength=float(self.wavelength))
+            from pm_driver import ThorlabsPowerMeter
+            device = ThorlabsPowerMeter(serial=serial, wavelength=float(self.wavelength))
             try:
                 power = device.read_mw()
                 if not math.isfinite(power):
@@ -323,7 +323,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.controller.connect_meter(identifier)
 
     def log_message(self, fmt, *args):
-        if not (args and isinstance(args[0], str) and ("/api/state" in args[0] or "/api/ports" in args[0])):
+        if not (args and isinstance(args[0], str) and any(p in args[0] for p in ("/api/state", "/api/ports", "/api/meters"))):
             super().log_message(fmt, *args)
 
     def host_allowed(self):
@@ -357,6 +357,26 @@ class Handler(BaseHTTPRequestHandler):
                 self.respond(200, {"ports": ports})
             except Exception as exc:
                 self.respond(503, {"error": f"串口枚举失败：{exc}"})
+            return
+        if path == "/api/meters":
+            try:
+                from pm_driver import discover_meters
+                with self.server.connection_lock:
+                    meters = discover_meters()
+                    for channel, controller in self.server.controllers.items():
+                        meter = controller.snapshot()["meter"]
+                        if not meter.get("connected"):
+                            continue
+                        identity = meter["identity"]
+                        matches = [m for m in meters if m["serial"].casefold() == identity["serial"].casefold()]
+                        if not matches:
+                            matches = [dict(identity)]
+                            meters.extend(matches)
+                        for match in matches:
+                            match["connected_channel"] = channel
+                    self.respond(200, {"meters": meters})
+            except Exception as exc:
+                self.respond(503, {"error": f"功率计扫描失败：{exc}"})
             return
         allowed = {"/": "index.html", "/index.html": "index.html", "/styles.css": "styles.css", "/core.js": "core.js", "/calibration.js": "calibration.js", "/app.js": "app.js"}
         if path not in allowed:

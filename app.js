@@ -12,12 +12,13 @@
     if ([value.efficiency, value.minimum, value.maximum].every(C.finite)) C.estimateRange({ ...value, reference: 10 });
   }
   function makeChannel(id) {
-    let config = defaultConfig(id), calibration = id === '556' ? C.normalizeCalibration(MOT_DEFAULT_CALIBRATION) : null;
+    let config = defaultConfig(id), calibration = id === '556' ? C.normalizeCalibration(MOT_DEFAULT_CALIBRATION) : null, serial = '';
     try {
       const saved = JSON.parse(localStorage.getItem(`mot-pid-optics-${id}-v1`) || (id === '556' ? localStorage.getItem('mot556-optics-v1') : null) || 'null');
       if (saved) { validateConfig(saved); config = { ...config, ...saved }; }
       const savedCal = JSON.parse(localStorage.getItem(`mot-pid-calibration-${id}-v1`) || 'null');
       if (savedCal && savedCal.wavelength_nm === Number(id)) calibration = C.normalizeCalibration(savedCal);
+      serial = localStorage.getItem(`mot-pid-meter-${id}`) || '';
     } catch {}
     // Apply this newly supplied measurement once, including existing browsers.
     // Subsequent edits or an explicit blank survive reloads.
@@ -30,10 +31,11 @@
         }
       } catch {}
     }
-    return { id, config, calibration, target: id === '556' ? 10 : null, draft: id === '556' ? '10.00' : '', rate: '2.0', port: id === '556' ? 'COM8' : '', serial: id === '556' ? 'M01306624' : '', chosen: false, applied: false, snapshot: null, polling: false, busy: false, history: [], window: 60, paused: false, pauseTime: 0, lastMeter: null, lastAdc: null, error: '', previousConnected: false };
+    return { id, config, calibration, target: id === '556' ? 10 : null, draft: id === '556' ? '10.00' : '', rate: '2.0', port: id === '556' ? 'COM8' : '', serial, chosen: false, applied: false, snapshot: null, polling: false, busy: false, history: [], window: 60, paused: false, pauseTime: 0, lastMeter: null, lastAdc: null, error: '', previousConnected: false };
   }
   const channels = { '556': makeChannel('556'), '399': makeChannel('399') };
   let channelId = '556';
+  let meterDevices = [], meterScanning = false, meterScanReady = false, meterScanError = '';
   const current = () => channels[channelId];
   const anyBusy = () => Object.values(channels).some(c => c.busy);
   function toast(message, bad = false) { const el = document.createElement('div'); el.className = 'toast' + (bad ? ' error' : ''); el.innerHTML = icon(bad ? 'info' : 'check') + `<span>${escape(message)}</span>`; $('toast-stack').append(el); setTimeout(() => el.remove(), 4200); }
@@ -58,7 +60,7 @@
   function loadControls() {
     const s = current(); $('target-input').value = s.draft; $('ramp-rate').value = s.rate;
     $('target-input').max = s.calibration ? s.calibration.points.at(-1).power_mw : 100000;
-    $('serial-port').value = s.port; $('meter-serial').value = s.serial;
+    $('serial-port').value = s.port; renderMeterOptions();
     $('transmission-input').value = C.finite(s.config.transmission) ? fmt(s.config.transmission) : '';
     $('transmission-error').textContent = '';
     all('[data-window]').forEach(b => b.classList.toggle('active', Number(b.dataset.window) === s.window));
@@ -114,10 +116,38 @@
     try { const value = await api('/api/ports'); $('serial-ports').innerHTML = value.ports.map(p => `<option value="${escape(p.device)}">${escape(p.description)}</option>`).join(''); $('service-state').textContent = `本机服务就绪 · 发现 ${value.ports.length} 个串口`; }
     catch (e) { $('service-state').textContent = e.message; }
   }
-  function openConnect() { const s = current(); $('serial-port').value = s.port; $('meter-serial').value = s.serial; $('connection-error').textContent = ''; $('connection-feedback').textContent = `${channelId} nm · 连接时只读，不自动应用目标。`; $('connect-dialog').showModal(); inspectService(); }
+  function rememberMeter(s) { try { localStorage.setItem(`mot-pid-meter-${s.id}`, s.serial); } catch {} }
+  function renderMeterOptions() {
+    const s = current(), connected = s.snapshot?.meter?.connected, identity = s.snapshot?.meter?.identity;
+    const devices = meterDevices.map(d => ({ ...d }));
+    // Keep the actively read instrument visible even if discovery reports it busy.
+    if (connected && !devices.some(d => d.serial === identity.serial)) devices.push({ ...identity, connected_channel: s.id });
+    const eligible = devices.filter(d => !d.connected_channel || d.connected_channel === s.id);
+    if (connected) s.serial = identity.serial;
+    else if (meterScanReady && !eligible.some(d => d.serial === s.serial)) s.serial = eligible.length === 1 ? eligible[0].serial : '';
+    const placeholder = meterScanning ? '正在扫描…' : devices.length ? '请选择功率计' : '未发现功率计';
+    $('meter-serial').innerHTML = `<option value="">${placeholder}</option>` + devices.map(d => {
+      const assigned = d.connected_channel && d.connected_channel !== s.id;
+      return `<option value="${escape(d.serial)}" ${assigned ? 'disabled' : ''}>${escape(d.model)} · ${escape(d.serial)}${d.connected_channel ? ` · ${escape(d.connected_channel)} nm 已连接` : ''}</option>`;
+    }).join('');
+    $('meter-serial').value = s.serial;
+    $('meter-scan-state').textContent = meterScanning ? '正在查找 USB 功率计…' : meterScanError || (devices.length ? `发现 ${devices.length} 台功率计` : '未发现功率计，请接入 USB 后重新扫描');
+  }
+  async function scanMeters() {
+    if (meterScanning || anyBusy()) return;
+    meterScanning = true; meterScanError = ''; renderMeterOptions(); render();
+    try {
+      const value = await api('/api/meters');
+      if (!Array.isArray(value.meters)) throw Error('请重新启动本机控制台服务');
+      meterDevices = value.meters;
+    } catch (e) { meterDevices = []; meterScanError = e.message; }
+    finally { meterScanning = false; meterScanReady = true; renderMeterOptions(); render(); }
+  }
+  function openConnect() { const s = current(); $('serial-port').value = s.port; renderMeterOptions(); $('connection-error').textContent = ''; $('connection-feedback').textContent = `${channelId} nm · 连接后设置功率计波长，不自动应用目标。`; $('connect-dialog').showModal(); inspectService(); scanMeters(); }
   ['connect-button', 'nav-devices'].forEach(id => $(id).onclick = openConnect); $('refresh-ports').onclick = inspectService;
   $('serial-port').addEventListener('input', () => { current().port = $('serial-port').value.trim(); });
-  $('meter-serial').addEventListener('input', () => { current().serial = $('meter-serial').value.trim(); });
+  $('refresh-meters').onclick = scanMeters;
+  $('meter-serial').addEventListener('change', () => { current().serial = $('meter-serial').value; rememberMeter(current()); render(); });
   async function connect(kind) {
     if (anyBusy()) return; const s = current(), id = channelId;
     s.port = $('serial-port').value.trim(); s.serial = $('meter-serial').value.trim(); s.busy = true;
@@ -126,6 +156,7 @@
       const connected = kind === 'fpga' ? s.snapshot?.fpga.connected : s.snapshot?.meter.connected;
       const value = connected ? await api(`/api/disconnect/${kind}`, {}, id) : await api(`/api/connect/${kind}`, kind === 'fpga' ? { port: s.port } : { serial: s.serial }, id);
       accept(value.state, id); $('connection-feedback').textContent = connected ? '设备已断开，相关读数已清空。' : kind === 'fpga' ? `${id} nm FPGA 已连接，未自动修改目标。` : `功率计已连接，${id} nm 已回读。`;
+      if (kind === 'meter') { rememberMeter(s); meterDevices = meterDevices.map(d => d.serial === s.serial ? { ...d, connected_channel: connected ? null : id } : d); renderMeterOptions(); }
       toast(connected ? `${id} nm 设备已断开` : `${id} nm ${kind === 'fpga' ? 'FPGA' : '功率计'}已连接`);
     } catch (e) { $('connection-error').textContent = e.message; $('connection-feedback').textContent = '连接未完成'; toast(e.message, true); }
     finally { s.busy = false; render(); }
@@ -133,12 +164,15 @@
   $('connect-fpga').onclick = () => connect('fpga'); $('connect-meter').onclick = () => connect('meter');
   function accept(snapshot, id) {
     const s = channels[id], f = snapshot.fpga, m = snapshot.meter;
+    const meterChanged = !!m.connected !== !!s.snapshot?.meter?.connected || m.identity?.serial !== s.snapshot?.meter?.identity?.serial;
     if (f.connected && !s.previousConnected) {
       if (!s.chosen && s.calibration) { try { s.target = C.toPower(s.calibration, f.setpoint_code); s.draft = s.target.toFixed(2); s.applied = true; if (id === channelId) { $('target-input').value = s.draft; preview(); } } catch {} }
       else s.applied = false;
     }
     if (!f.connected) s.applied = false;
     s.previousConnected = !!f.connected; s.snapshot = snapshot;
+    if (m.connected && m.identity?.serial && s.serial !== m.identity.serial) { s.serial = m.identity.serial; rememberMeter(s); }
+    if (meterChanged && id === channelId) renderMeterOptions();
     const error = [f.error, m.error].filter(Boolean).join('；'); if (error && error !== s.error) toast(`${id} nm · ${error}`, true); s.error = error;
     const r = readings(s), newM = fresh(m) && m.sampled_at !== s.lastMeter, newF = fresh(f) && f.sampled_at !== s.lastAdc;
     if (newM || newF) { s.history.push({ time: Date.now(), power: newM ? r.power : null, adc: newF ? r.adcPower : null, target: s.target }); if (newM) s.lastMeter = m.sampled_at; if (newF) s.lastAdc = f.sampled_at; if (s.history.length > 3000) s.history.splice(0, s.history.length - 3000); }
@@ -214,7 +248,7 @@
     $('footer-channel').textContent = `${channelId} nm MOT`;
     document.title = `${channelId} nm MOT · PID Control Console`;
     $('connect-dialog-title').textContent = `连接 ${channelId} nm 设备`; $('range-dialog-title').textContent = `${channelId} nm · AOM 功率与范围估算`;
-    $('meter-wavelength-note').textContent = `使用本机 TLPMX 64 位驱动，连接后设置并回读 ${channelId} nm。`;
+    $('meter-wavelength-note').textContent = `支持 PM100D / PM100USB；连接后自动设置为 ${channelId} nm。`;
     all('[data-channel]').forEach(b => { const selected = b.dataset.channel === channelId; b.classList.toggle('active', selected); b.setAttribute('aria-selected', String(selected)); b.disabled = busy; });
     $('mode-text').textContent = f?.connected || m?.connected ? '设备模式' : '设备未连接';
     $('notice-text').textContent = s.serviceError || '连接光功率计后显示实测功率，并根据效率参数估算 AOM 前功率与可稳定范围。';
@@ -238,7 +272,8 @@
     $('live-label').innerHTML = '<span class="small-dot"></span>' + (s.paused ? '显示已暂停' : r.meterLive || r.fpgaLive ? '实时监测' : '等待连接');
     $('fpga-dot').classList.toggle('connected', r.fpgaLive); $('pm-dot').classList.toggle('connected', r.meterLive);
     $('fpga-strip').textContent = f?.connected ? f.port + (r.fpgaLive ? ' · 已连接' : ' · 数据过期') : '未连接'; $('pm-strip').textContent = m?.connected ? (m.identity?.model || 'Thorlabs') + (r.meterLive ? ` · ${channelId} nm` : ' · 等待读数') : '未连接'; $('last-update').textContent = r.meterLive || r.fpgaLive ? '数据更新中' : '尚无设备读数';
-    $('connect-fpga').textContent = f?.connected ? '断开 FPGA' : '连接 FPGA'; $('connect-meter').textContent = m?.connected ? '断开功率计' : '连接功率计'; $('connect-fpga').disabled = busy; $('connect-meter').disabled = busy;
+    $('connect-fpga').textContent = f?.connected ? '断开 FPGA' : '连接 FPGA'; $('connect-meter').textContent = m?.connected ? '断开功率计' : '连接功率计'; $('connect-fpga').disabled = busy; $('connect-meter').disabled = busy || (!m?.connected && (!s.serial || meterScanning));
+    $('meter-serial').disabled = busy || meterScanning || !!m?.connected; $('refresh-meters').disabled = busy || meterScanning;
     renderRange(r.power); if (!s.paused) renderChart();
   }
   function renderChart() {

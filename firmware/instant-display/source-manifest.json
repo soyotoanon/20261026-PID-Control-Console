@@ -1,0 +1,11 @@
+{
+  "base_bitstream_sha256": "cafbe8de81ffce27a24dc27ba2b6b072918a7a5f97fe2aba829c99dc86c3eafa",
+  "base_project": "D:\\codex\\2026-10-23\\wo\\outputs\\pid_gain_tuning",
+  "changed_rtl": [
+    "power_display_piecewise.v",
+    "reg_file.v"
+  ],
+  "display_revision": "5031",
+  "sample_policy": "single fresh ADC sample every 0.1 s; no averaging",
+  "pi_abi": "A624 unchanged"
+}
