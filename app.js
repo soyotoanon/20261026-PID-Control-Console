@@ -4,7 +4,8 @@
   const fmt = (v, n = 2) => C.finite(v) ? v.toFixed(n) : '-';
   const escape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const icon = n => `<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
-  const defaultConfig = id => ({ efficiency: null, transmission: null, minimum: null, maximum: null, margin: 5, tolerance: 1 });
+  const measuredTransmission556 = 4.96 / 23 * 100; // User measured fiber entrance -> final MOT, 2026-10-28.
+  const defaultConfig = id => ({ efficiency: null, transmission: id === '556' ? measuredTransmission556 : null, minimum: null, maximum: null, margin: 5, tolerance: 1 });
   function validateConfig(value) {
     for (const k of ['efficiency', 'transmission', 'minimum', 'maximum']) if (value[k] !== null && !(C.finite(value[k]) && value[k] > 0 && value[k] <= 100)) throw Error('效率及透过率需大于 0 且不超过 100%，未知可留空');
     if (!C.finite(value.margin) || !(value.margin >= 0 && value.margin < 50) || !C.finite(value.tolerance) || !(value.tolerance >= .01 && value.tolerance <= 20)) throw Error('请检查预留余量与误差带');
@@ -18,6 +19,17 @@
       const savedCal = JSON.parse(localStorage.getItem(`mot-pid-calibration-${id}-v1`) || 'null');
       if (savedCal && savedCal.wavelength_nm === Number(id)) calibration = C.normalizeCalibration(savedCal);
     } catch {}
+    // Apply this newly supplied measurement once, including existing browsers.
+    // Subsequent edits or an explicit blank survive reloads.
+    if (id === '556') {
+      try {
+        if (!localStorage.getItem('mot-pid-transmission-556-measurement-20261028')) {
+          config.transmission = measuredTransmission556;
+          localStorage.setItem('mot-pid-optics-556-v1', JSON.stringify(config));
+          localStorage.setItem('mot-pid-transmission-556-measurement-20261028', '1');
+        }
+      } catch {}
+    }
     return { id, config, calibration, target: id === '556' ? 10 : null, draft: id === '556' ? '10.00' : '', rate: '2.0', port: id === '556' ? 'COM8' : '', serial: id === '556' ? 'M01306624' : '', chosen: false, applied: false, snapshot: null, polling: false, busy: false, history: [], window: 60, paused: false, pauseTime: 0, lastMeter: null, lastAdc: null, error: '', previousConnected: false };
   }
   const channels = { '556': makeChannel('556'), '399': makeChannel('399') };
@@ -47,6 +59,8 @@
     const s = current(); $('target-input').value = s.draft; $('ramp-rate').value = s.rate;
     $('target-input').max = s.calibration ? s.calibration.points.at(-1).power_mw : 100000;
     $('serial-port').value = s.port; $('meter-serial').value = s.serial;
+    $('transmission-input').value = C.finite(s.config.transmission) ? fmt(s.config.transmission) : '';
+    $('transmission-error').textContent = '';
     all('[data-window]').forEach(b => b.classList.toggle('active', Number(b.dataset.window) === s.window));
     $('pause-chart').innerHTML = icon(s.paused ? 'play' : 'pause'); preview();
   }
@@ -144,10 +158,24 @@
   }
   function openParameters() { const s = current(), config = opticalConfig(s); Object.keys(s.config).forEach(k => { const field = $('range-form').elements[k]; field.value = config[k] ?? ''; field.readOnly = s.id === '556' && ['efficiency','minimum','maximum'].includes(k); }); $('range-error').textContent = ''; $('range-dialog').showModal(); }
   $('range-settings').onclick = openParameters; $('nav-parameters').onclick = openParameters;
+  function saveTransmission() {
+    const s = current(), raw = $('transmission-input').value.trim();
+    const transmission = raw === '' ? null : Number(raw);
+    try {
+      if (transmission !== null && (!C.finite(transmission) || transmission <= 0 || transmission > 100)) throw Error('透过率应大于 0 且不超过 100%，未知可留空');
+      const next = { ...s.config, transmission };
+      localStorage.setItem(`mot-pid-optics-${s.id}-v1`, JSON.stringify(next));
+      s.config = next; $('transmission-error').textContent = ''; render();
+      toast(transmission === null ? '透过率已清空，显示未校正的等效功率' : `${s.id} nm 下游透过率已保存：${fmt(transmission)}%`);
+    } catch (e) { $('transmission-error').textContent = e.message; }
+  }
+  $('save-transmission').onclick = saveTransmission;
+  $('transmission-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveTransmission(); } });
+
   $('range-form').onsubmit = e => {
     e.preventDefault(); const s = current(), f = e.currentTarget;
     const next = Object.fromEntries(Object.keys(s.config).map(k => [k, !f.elements[k].value.trim() ? null : Number(f.elements[k].value)]));
-    try { validateConfig(next); s.config = next; try { localStorage.setItem(`mot-pid-optics-${channelId}-v1`, JSON.stringify(next)); } catch {} $('range-dialog').close(); toast(`${channelId} nm 光路参数已保存`); render(); }
+    try { validateConfig(next); s.config = next; try { localStorage.setItem(`mot-pid-optics-${channelId}-v1`, JSON.stringify(next)); } catch {} $('transmission-input').value = C.finite(next.transmission) ? fmt(next.transmission) : ''; $('transmission-error').textContent = ''; $('range-dialog').close(); toast(`${channelId} nm 光路参数已保存`); render(); }
     catch (err) { $('range-error').textContent = err.message; }
   };
   $('channel-calibration-file').onchange = async event => {

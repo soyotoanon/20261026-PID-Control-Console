@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "live": {
+    "power-metric": "7.00",
+    "upstream-label": "AOM 前光功率",
+    "upstream-metric": "53.86",
+    "upstream-note": "η 60.22% · T 21.57%",
+    "range-values": "5.08 – 8.76",
+    "range-note": "RF ≈ 349.11 mVpp · η ≈ 60.22% · 标定覆盖 DAC 2710–15000（部分范围，未外推）；按当前光路透过率不变估算。"
+  },
+  "checks": [
+    "21.57 default",
+    "existing null migration",
+    "manual save and reload",
+    "invalid percentages rejected",
+    "Enter saves only optics",
+    "dialog sync",
+    "channel isolation",
+    "clear T fallback",
+    "zero device POSTs",
+    "mobile layout"
+  ],
+  "fixture_calculation_test": true,
+  "device_control_writes": false
+}
