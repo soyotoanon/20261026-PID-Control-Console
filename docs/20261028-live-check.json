@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-28",
+  "mapping": {
+    "peak_parameter_intercept": 0.226,
+    "slope": 0.0087,
+    "actual_peak_factor": 0.77,
+    "peak_to_peak_factor": 2
+  },
+  "browser": {
+    "passed": true,
+    "live": {
+      "power-metric": "1.54",
+      "target-metric": "1.56",
+      "efficiency-detail": "60.01% DAC → RF → 实测曲线",
+      "range-values": "1.12 – 1.94",
+      "range-note": "RF ≈ 348.64 mVpp · η ≈ 60.01% · 标定覆盖 DAC 2710–15000（部分范围，未外推）；按当前光路透过率不变估算。",
+      "upstream-note": "待填 AOM 出口至功率计的总透过率 T",
+      "dac-detail": "限幅 1400–15000"
+    },
+    "errors": []
+  },
+  "target_switch": {
+    "original_target_code": 8479,
+    "original_calibrated_mw": 1.5622681593373688,
+    "test_calibrated_mw": 1.502,
+    "direction_passed": true,
+    "restored_exact_target_code": true,
+    "mean_power_mw": {
+      "before": 1.5442225,
+      "down": 1.48606375,
+      "restored": 1.5447562499999998
+    }
+  },
+  "firmware": "A624 RAM only; C07 Kp=9 Ki=0.540008544921875; target remeasured=8479",
+  "five_fresh_captures_passed": true,
+  "transmission_unknown": true,
+  "absolute_power_accuracy_validated": false
+}

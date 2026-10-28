@@ -4,7 +4,7 @@
   const fmt = (v, n = 2) => C.finite(v) ? v.toFixed(n) : '-';
   const escape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const icon = n => `<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
-  const defaultConfig = id => ({ efficiency: id === '556' ? 75.42 : null, transmission: null, minimum: id === '556' ? 60 : null, maximum: id === '556' ? 85 : null, margin: 5, tolerance: 1 });
+  const defaultConfig = id => ({ efficiency: null, transmission: null, minimum: null, maximum: null, margin: 5, tolerance: 1 });
   function validateConfig(value) {
     for (const k of ['efficiency', 'transmission', 'minimum', 'maximum']) if (value[k] !== null && !(C.finite(value[k]) && value[k] > 0 && value[k] <= 100)) throw Error('效率及透过率需大于 0 且不超过 100%，未知可留空');
     if (!C.finite(value.margin) || !(value.margin >= 0 && value.margin < 50) || !C.finite(value.tolerance) || !(value.tolerance >= .01 && value.tolerance <= 20)) throw Error('请检查预留余量与误差带');
@@ -18,7 +18,7 @@
       const savedCal = JSON.parse(localStorage.getItem(`mot-pid-calibration-${id}-v1`) || 'null');
       if (savedCal && savedCal.wavelength_nm === Number(id)) calibration = C.normalizeCalibration(savedCal);
     } catch {}
-    return { id, config, calibration, target: id === '556' ? 10 : null, draft: id === '556' ? '10.00' : '', rate: '2.0', port: id === '556' ? 'COM9' : '', serial: id === '556' ? 'P2007293' : '', chosen: false, applied: false, snapshot: null, polling: false, busy: false, history: [], window: 60, paused: false, pauseTime: 0, lastMeter: null, lastAdc: null, error: '', previousConnected: false };
+    return { id, config, calibration, target: id === '556' ? 10 : null, draft: id === '556' ? '10.00' : '', rate: '2.0', port: id === '556' ? 'COM8' : '', serial: id === '556' ? 'M01306624' : '', chosen: false, applied: false, snapshot: null, polling: false, busy: false, history: [], window: 60, paused: false, pauseTime: 0, lastMeter: null, lastAdc: null, error: '', previousConnected: false };
   }
   const channels = { '556': makeChannel('556'), '399': makeChannel('399') };
   let channelId = '556';
@@ -135,7 +135,14 @@
     catch (e) { s.snapshot = null; s.applied = false; s.previousConnected = false; s.serviceError = e.message.includes('旧版') ? e.message : ''; }
     finally { s.polling = false; if (id === channelId) render(); }
   }
-  function openParameters() { const s = current(); Object.keys(s.config).forEach(k => { $('range-form').elements[k].value = s.config[k] ?? ''; }); $('range-error').textContent = ''; $('range-dialog').showModal(); }
+  function opticalConfig(s = current()) {
+    if (s.id !== '556') return { ...s.config };
+    try {
+      if (!fresh(s.snapshot?.fpga)) throw Error('等待 FPGA 实时 DAC 读数');
+      return { ...s.config, ...C.estimateOptics556(s.snapshot.fpga), automatic: true };
+    } catch (e) { return { ...s.config, efficiency: null, minimum: null, maximum: null, automatic: true, error: e.message }; }
+  }
+  function openParameters() { const s = current(), config = opticalConfig(s); Object.keys(s.config).forEach(k => { const field = $('range-form').elements[k]; field.value = config[k] ?? ''; field.readOnly = s.id === '556' && ['efficiency','minimum','maximum'].includes(k); }); $('range-error').textContent = ''; $('range-dialog').showModal(); }
   $('range-settings').onclick = openParameters; $('nav-parameters').onclick = openParameters;
   $('range-form').onsubmit = e => {
     e.preventDefault(); const s = current(), f = e.currentTarget;
@@ -156,11 +163,11 @@
     } catch (e) { toast(e.message, true); } finally { event.target.value = ''; }
   };
   function renderRange(power) {
-    const s = current(), config = s.config; let range = null;
+    const s = current(), config = opticalConfig(s); let range = null;
     if (C.finite(power) && power > 0) { try { range = C.estimateRange({ ...config, reference: power }); } catch {} }
     const upstream = C.finite(power) && power >= 0 && config.efficiency > 0 && config.transmission > 0 ? power / (config.efficiency / 100 * config.transmission / 100) : null;
     $('upstream-metric').textContent = fmt(upstream);
-    $('upstream-note').textContent = !C.finite(power) ? '等待功率计与光路参数' : !config.efficiency || !config.transmission ? '当前效率或透过率未知' : `η ${config.efficiency}% · T ${config.transmission}%`;
+    $('upstream-note').textContent = !C.finite(power) ? '等待功率计与光路参数' : !config.efficiency || !config.transmission ? config.error || (!config.transmission ? '待填 AOM 出口至功率计的总透过率 T' : '当前效率未知') : `η ${config.efficiency}% · T ${config.transmission}%`;
     $('range-values').innerHTML = range ? `${fmt(range.low)} <span>–</span> ${fmt(range.high)}` : '-';
     $('range-recommend').textContent = range ? `建议稳定区间 ${fmt(range.recommendedLow)}–${fmt(range.recommendedHigh)} mW` : '建议稳定区间 -';
     $('range-low').textContent = range ? fmt(range.low) : '-'; $('range-high').textContent = range ? fmt(range.high) : '-';
@@ -168,9 +175,12 @@
     const track = document.querySelector('.range-recommended'); track.style.opacity = range ? '1' : '.2'; track.style.left = config.margin + '%'; track.style.right = config.margin + '%';
     if (range && C.finite(s.target)) { const outside = s.target < range.low || s.target > range.high; $('range-marker').style.left = Math.max(0, Math.min(100, (s.target - range.low) / (range.high - range.low) * 100)) + '%'; $('range-marker').style.background = outside ? '#b67c25' : '#176e58'; $('range-target-label').textContent = outside ? '目标超出估算范围' : `目标 ${fmt(s.target)} mW`; }
     else $('range-target-label').textContent = !C.finite(power) ? '等待功率计数据' : !range ? '等待效率范围参数' : '尚未设置目标';
-    $('range-note').textContent = range ? `按实测 ${fmt(power)} mW、手填当前效率 ${config.efficiency}%、可调效率 ${config.minimum}%–${config.maximum}% 估算。改变 RF / DAC 后须更新效率，下游透过率须稳定。` : '未连接功率计或尚缺本路效率参数，相关估算显示“-”。各路独立设置，不使用其他波长参数。';
+    $('range-note').textContent = range ? config.automatic ?
+      `RF ≈ ${fmt(config.rf)} mVpp · η ≈ ${fmt(config.efficiency)}% · 标定覆盖 DAC ${config.lowDac}–${config.highDac}${config.partial ? '（部分范围，未外推）' : ''}；按当前光路透过率不变估算。` :
+      `按实测功率和手填效率估算；改变 RF 后须更新效率。` : config.error || '等待功率计与本路效率参数';
+    if (config.automatic) $('efficiency-detail').innerHTML = C.finite(config.efficiency) ? `${fmt(config.efficiency)}% <small>DAC → RF → 实测曲线</small>` : '<small>等待有效 DAC 读数</small>';
   }
-  function statusText(status) { const a = [[1, '丢光'], [2, 'ADC 过量程'], [4, '输出饱和'], [8, '积分到限'], [16, '反馈冻结'], [32, 'ADC 时钟停止']].filter(([b]) => status & b).map(([, s]) => s); return a.length ? a.join(' / ') : '正常'; }
+  function statusText(status) { const a = [[1, '丢光'], [2, 'ADC 过量程历史标志'], [4, '输出饱和'], [8, '积分到限'], [16, '反馈冻结'], [32, 'ADC 时钟停止']].filter(([b]) => status & b).map(([, s]) => s); return a.length ? a.join(' / ') : '正常'; }
   function render() {
     const s = current(), config = s.config, cal = s.calibration, r = readings(s), f = r.f, m = r.m, busy = anyBusy();
     $('footer-channel').textContent = `${channelId} nm MOT`;
@@ -180,14 +190,14 @@
     all('[data-channel]').forEach(b => { const selected = b.dataset.channel === channelId; b.classList.toggle('active', selected); b.setAttribute('aria-selected', String(selected)); b.disabled = busy; });
     $('mode-text').textContent = f?.connected || m?.connected ? '设备模式' : '设备未连接';
     $('notice-text').textContent = s.serviceError || '连接光功率计后显示实测功率，并根据效率参数估算 AOM 前功率与可稳定范围。';
-    $('target-metric').textContent = fmt(s.target); $('target-foot').textContent = s.applied && r.fpgaLive ? (f.ramp ? '正在斜坡更新 · 读回校验' : 'FPGA 目标已读回') : C.finite(s.target) ? '仅本地设定 · 未下发' : '尚未设置目标';
+    $('target-metric').textContent = fmt(s.target); $('target-foot').textContent = s.applied && r.fpgaLive ? (f.ramp ? '正在斜坡更新 · 读回校验' : cal?.historical ? '板上目标 · 历史标定换算' : 'FPGA 目标已读回') : C.finite(s.target) ? '仅本地设定 · 未下发' : '尚未设置目标';
     $('power-metric').textContent = fmt(r.power); $('meter-tag').textContent = r.meterLive ? '实测' : m?.connected ? '等待读数' : '未连接';
     const deviation = C.finite(r.power) && s.target > 0 ? (r.power - s.target) / s.target * 100 : null;
     $('error-metric').textContent = C.finite(deviation) ? `${deviation >= 0 ? '+' : ''}${fmt(deviation)}%` : '-';
     $('lock-tag').textContent = C.finite(deviation) ? Math.abs(deviation) <= config.tolerance ? '误差带内' : '超出误差带' : '未测量'; $('lock-tag').classList.toggle('warn', C.finite(deviation) && Math.abs(deviation) > config.tolerance);
     $('tolerance-foot').innerHTML = `<i></i>误差带 ±${fmt(config.tolerance)}%`;
     $('adc-code').textContent = r.fpgaLive ? f.adc_code : '-'; $('adc-target').textContent = r.fpgaLive ? f.setpoint_code : '-'; $('dac-code').textContent = r.fpgaLive ? f.dac_code : '-'; $('adc-power').innerHTML = fmt(r.adcPower) + '<small> mW</small>';
-    $('readback-label').textContent = r.fpgaLive ? '14 位数字码 · 设备读回' : '等待 FPGA 连接'; $('dac-detail').textContent = r.fpgaLive ? '实际输出读回' : '未连接';
+    $('readback-label').textContent = r.fpgaLive ? '14 位数字码 · 设备读回' : '等待 FPGA 连接'; $('dac-detail').textContent = r.fpgaLive ? `${f.dac_code === f.out_max ? '已达上限 · ' : f.dac_code === f.out_min ? '已达下限 · ' : ''}限幅 ${f.out_min}–${f.out_max}` : '未连接';
     $('pi-toggle').classList.toggle('on', !!(r.fpgaLive && f.pi_enabled)); $('pi-toggle').setAttribute('aria-checked', String(!!(r.fpgaLive && f.pi_enabled))); $('pi-toggle').disabled = busy || !r.fpgaLive; $('stop-loop').disabled = busy || !r.fpgaLive || !f.pi_enabled;
     $('loop-status').textContent = r.fpgaLive ? (f.status & 63 ? statusText(f.status) : f.pi_enabled ? '反馈已使能' : '反馈已停用') : '未连接'; $('loop-status').classList.toggle('warn', r.fpgaLive && !!(f.status & 63));
     $('efficiency-detail').innerHTML = C.finite(config.efficiency) ? fmt(config.efficiency) + '% <small>手填参考值</small>' : '<small>本路尚未填写</small>';
