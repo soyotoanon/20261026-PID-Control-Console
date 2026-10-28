@@ -1,0 +1,273 @@
+{
+  "passed": true,
+  "viewports": [
+    {
+      "viewport": [
+        1120,
+        520
+      ],
+      "geometry": {
+        ".sidebar": {
+          "top": 0,
+          "bottom": 520,
+          "width": 104,
+          "height": 520
+        },
+        ".control-column": {
+          "top": 69,
+          "bottom": 922,
+          "width": 348.828125,
+          "height": 853
+        },
+        "#target-input": {
+          "top": 141,
+          "bottom": 177,
+          "width": 198.078125,
+          "height": 36
+        },
+        "#range-values": {
+          "top": 224,
+          "bottom": 247,
+          "width": 120.96875,
+          "height": 23
+        },
+        "#apply-target": {
+          "top": 281.5,
+          "bottom": 319.5,
+          "width": 318.828125,
+          "height": 38
+        }
+      }
+    },
+    {
+      "viewport": [
+        1116,
+        516
+      ],
+      "geometry": {
+        ".sidebar": {
+          "top": 0,
+          "bottom": 516,
+          "width": 104,
+          "height": 516
+        },
+        ".control-column": {
+          "top": 69,
+          "bottom": 922,
+          "width": 347.390625,
+          "height": 853
+        },
+        "#target-input": {
+          "top": 141,
+          "bottom": 177,
+          "width": 196.640625,
+          "height": 36
+        },
+        "#range-values": {
+          "top": 224,
+          "bottom": 247,
+          "width": 120.96875,
+          "height": 23
+        },
+        "#apply-target": {
+          "top": 281.5,
+          "bottom": 319.5,
+          "width": 317.390625,
+          "height": 38
+        }
+      }
+    },
+    {
+      "viewport": [
+        1280,
+        600
+      ],
+      "geometry": {
+        ".sidebar": {
+          "top": 0,
+          "bottom": 600,
+          "width": 104,
+          "height": 600
+        },
+        ".control-column": {
+          "top": 69,
+          "bottom": 922,
+          "width": 406.4375,
+          "height": 853
+        },
+        "#target-input": {
+          "top": 141,
+          "bottom": 177,
+          "width": 255.6875,
+          "height": 36
+        },
+        "#range-values": {
+          "top": 224,
+          "bottom": 247,
+          "width": 120.96875,
+          "height": 23
+        },
+        "#apply-target": {
+          "top": 281.5,
+          "bottom": 319.5,
+          "width": 376.4375,
+          "height": 38
+        }
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        780
+      ],
+      "geometry": {
+        ".sidebar": {
+          "top": 0,
+          "bottom": 780,
+          "width": 104,
+          "height": 780
+        },
+        ".control-column": {
+          "top": 69,
+          "bottom": 922,
+          "width": 464.03125,
+          "height": 853
+        },
+        "#target-input": {
+          "top": 141,
+          "bottom": 177,
+          "width": 313.28125,
+          "height": 36
+        },
+        "#range-values": {
+          "top": 224,
+          "bottom": 247,
+          "width": 120.96875,
+          "height": 23
+        },
+        "#apply-target": {
+          "top": 281.5,
+          "bottom": 319.5,
+          "width": 434.03125,
+          "height": 38
+        }
+      }
+    },
+    {
+      "viewport": [
+        1000,
+        540
+      ],
+      "geometry": {
+        ".sidebar": {
+          "top": 0,
+          "bottom": 540,
+          "width": 104,
+          "height": 540
+        },
+        ".control-column": {
+          "top": 69,
+          "bottom": 922,
+          "width": 330,
+          "height": 853
+        },
+        "#target-input": {
+          "top": 141,
+          "bottom": 177,
+          "width": 179.25,
+          "height": 36
+        },
+        "#range-values": {
+          "top": 224,
+          "bottom": 247,
+          "width": 120.96875,
+          "height": 23
+        },
+        "#apply-target": {
+          "top": 281.5,
+          "bottom": 319.5,
+          "width": 300,
+          "height": 38
+        }
+      }
+    },
+    {
+      "viewport": [
+        900,
+        600
+      ],
+      "geometry": {
+        ".sidebar": {
+          "top": 0,
+          "bottom": 600,
+          "width": 72,
+          "height": 600
+        },
+        ".control-column": {
+          "top": 69,
+          "bottom": 922,
+          "width": 781,
+          "height": 853
+        },
+        "#target-input": {
+          "top": 141,
+          "bottom": 177,
+          "width": 630.25,
+          "height": 36
+        },
+        "#range-values": {
+          "top": 224,
+          "bottom": 247,
+          "width": 120.96875,
+          "height": 23
+        },
+        "#apply-target": {
+          "top": 281.5,
+          "bottom": 319.5,
+          "width": 751,
+          "height": 38
+        }
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "geometry": {
+        ".sidebar": {
+          "top": 0,
+          "bottom": 844,
+          "width": 56,
+          "height": 844
+        },
+        ".control-column": {
+          "top": 69,
+          "bottom": 917,
+          "width": 299,
+          "height": 848
+        },
+        "#target-input": {
+          "top": 141,
+          "bottom": 177,
+          "width": 148.25,
+          "height": 36
+        },
+        "#range-values": {
+          "top": 224,
+          "bottom": 247,
+          "width": 120.96875,
+          "height": 23
+        },
+        "#apply-target": {
+          "top": 281.5,
+          "bottom": 319.5,
+          "width": 269,
+          "height": 38
+        }
+      }
+    }
+  ],
+  "hardware_writes": false,
+  "browser": "real Edge"
+}
