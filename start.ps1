@@ -1,7 +1,6 @@
 ﻿param(
     [ValidateRange(1024, 65535)][int]$Port = 8766,
-    [switch]$NoOpen,
-    [switch]$NoShortcut
+    [switch]$NoOpen
 )
 $ErrorActionPreference = 'Stop'
 $motRoot = $PSScriptRoot
@@ -54,17 +53,6 @@ try {
     }
     if ((Get-ScheduledTask -TaskName $motTaskName).State -ne 'Running') {
         Start-ScheduledTask -TaskName $motTaskName
-    }
-    if (-not $NoShortcut -and $Port -eq 8766) {
-        $motShell = New-Object -ComObject WScript.Shell
-        $motLink = $motShell.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'MOT 光功率控制台.lnk'))
-        $motLink.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-        $motLink.Arguments = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + (Join-Path $motRoot 'start.ps1') + '"'
-        $motLink.WorkingDirectory = $motRoot
-        $motLink.WindowStyle = 7
-        $motLink.Description = '打开本机 MOT 光功率控制台，自动检查并启动后台服务'
-        $motLink.IconLocation = (Join-Path $env:SystemRoot 'System32\shell32.dll') + ',21'
-        $motLink.Save()
     }
     $motDeadline = [DateTime]::UtcNow.AddSeconds(25)
     while (-not (Test-MotReady)) {

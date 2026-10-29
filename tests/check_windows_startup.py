@@ -44,7 +44,7 @@ def healthy(timeout=20, old_pid=None):
 
 
 def launch():
-    result = subprocess.run(PS + ['-File', str(ROOT/'start.ps1'), '-Port', str(PORT), '-NoOpen', '-NoShortcut'], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=45)
+    result = subprocess.run(PS + ['-File', str(ROOT/'start.ps1'), '-Port', str(PORT), '-NoOpen'], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=45)
     assert result.returncode == 0, (result.stdout, result.stderr)
     return result.stdout.strip()
 
