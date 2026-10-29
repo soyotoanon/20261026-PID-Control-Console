@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "checks": [
+    "Default direct target and disabled rate input",
+    "Browser submit reaches actual HTTP handler and UART step write",
+    "Explicit slow ramp schedules gradual updates",
+    "Old backend cannot silently turn a direct step into a ramp"
+  ],
+  "runtime_errors": [],
+  "physical_hardware_writes": 0,
+  "fixture_uart_writes": 2
+}

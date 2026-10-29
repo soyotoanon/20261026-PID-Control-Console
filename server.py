@@ -20,7 +20,7 @@ from urllib.parse import urlparse, parse_qs
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "vendor"))
 APP = "mot556-console"
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 
 
 def number(value, name):
@@ -113,14 +113,16 @@ class FPGA:
         raise TimeoutError(f"FPGA 寄存器 0x{address:02X} 未返回有效应答")
 
     def write_verified(self, address, value):
-        if address not in (0x00, 0x18):
-            raise ValueError("此界面只写目标寄存器和 PI 使能位")
+        if address not in (0x00, 0x18, 0x2c):
+            raise ValueError("此界面只写目标、目标变化方式和 PI 使能位")
         if not isinstance(value, int) or not 0 <= value <= 65535:
             raise ValueError("寄存器值越界")
         self.serial.write(self.frame(1, address, value))
         actual = self.read(address)
         if actual != value:
             raise RuntimeError(f"寄存器 0x{address:02X} 读回 {actual}，与写入 {value} 不一致")
+        if address == 0x2c:
+            self.info["hardware_slew"] = actual
 
     def snapshot(self):
         ctrl = self.read(0)
@@ -200,10 +202,16 @@ class Controller:
             finally:
                 self.state[kind] = {"connected": False, "sampled_at": None, "power_mw": None, "error": ""}
 
-    def target(self, power, rate, payload):
-        power, rate = number(power, "目标功率"), number(rate, "斜坡速率")
-        if power < 0 or not .01 <= rate <= 100:
-            raise ValueError("目标必须非负，斜坡速率范围 0.01–100 mW/s")
+    def target(self, power, rate, payload, mode="step"):
+        power = number(power, "目标功率")
+        if mode not in ("step", "ramp"):
+            raise ValueError("目标变化方式必须为直接更新或按速率渐变")
+        if power < 0:
+            raise ValueError("目标必须非负")
+        if mode == "ramp":
+            rate = number(rate, "斜坡速率")
+            if not .01 <= rate <= 100:
+                raise ValueError("斜坡速率范围 0.01–100 mW/s")
         if not isinstance(payload, dict) or payload.get("wavelength_nm") != self.wavelength:
             raise ValueError(f"必须使用 {self.wavelength} nm 本路标定，不能复用其他通道标定")
         cal = Calibration(payload)
@@ -215,7 +223,23 @@ class Controller:
             if ctrl & 0x71E or self.fpga.read(0x23) & 1 or (self.fpga.firmware in ("A623", "A624") and self.fpga.read(0x30) & 3):
                 raise RuntimeError("检测到其他输出模式或扰动测量，请先停止原有测量，再设置光功率目标")
             current_code = self.fpga.read(0x18)
-            current = cal.to_power(current_code)
+            # Check ramp start before any write. A direct step does not need the
+            # previous target to lie within the newly selected calibration.
+            current = cal.to_power(current_code) if mode == "ramp" else None
+            self.ramp_job = None
+            self.state["fpga"]["ramp"] = None
+            # One explicit limiter: software for a requested slow ramp, none for
+            # a direct target. Do not stack the old one-code/sample FPGA ramp.
+            if self.fpga.read(0x2c) != 16383:
+                self.fpga.write_verified(0x2c, 16383)
+            self.fpga.info["hardware_slew"] = 16383
+            self.state["fpga"]["hardware_slew"] = 16383
+            self.state["fpga"]["target_mode"] = mode
+            if mode == "step":
+                if code != current_code:
+                    self.fpga.write_verified(0x18, code)
+                self.state["fpga"]["setpoint_code"] = code
+                return
             if code == current_code:
                 self.ramp_job = None
                 self.state["fpga"]["ramp"] = None
@@ -330,7 +354,7 @@ class Handler(BaseHTTPRequestHandler):
         return self.headers.get("Host", "") in (f"127.0.0.1:{self.server.server_port}", f"localhost:{self.server.server_port}")
 
     def respond(self, status, payload):
-        raw = json.dumps({"app": APP, "version": VERSION, "instance_id": self.controller.instance, **payload}, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        raw = json.dumps({"app": APP, "version": VERSION, "target_modes": ["step", "ramp"], "instance_id": self.controller.instance, **payload}, ensure_ascii=False, allow_nan=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(raw)))
@@ -420,7 +444,7 @@ class Handler(BaseHTTPRequestHandler):
             elif route in ("/api/disconnect/fpga", "/api/disconnect/meter"):
                 self.controller.disconnect(route.rsplit("/", 1)[-1])
             elif route == "/api/target":
-                self.controller.target(data.get("power_mw"), data.get("rate_mw_s"), data.get("calibration"))
+                self.controller.target(data.get("power_mw"), data.get("rate_mw_s"), data.get("calibration"), data.get("mode", "step"))
             elif route == "/api/pi":
                 self.controller.set_pi(data.get("enabled"))
             else:

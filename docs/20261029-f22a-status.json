@@ -1,0 +1,43 @@
+{
+  "console_version": "1.3.0",
+  "firmware_candidate": "F22A",
+  "candidate_flash_written": false,
+  "user_decision": "暂不烧录，保留当前闭环",
+  "source_url": "https://github.com/soyotoanon/20261022-vco-mapping-verification/tree/main/pid_response_c07_20261029",
+  "baseline_source_url": "https://github.com/soyotoanon/20261022-vco-mapping-verification/tree/main/pid_fast_c07_20261029",
+  "build": {
+    "exit_code": 0,
+    "bit_sha256": "7ba6a378f5aba5f61e483e877604c604546219768a6d3948e024dc1e3fe02ee9",
+    "mcs_sha256": "deb2326dfb625b6f50790f4513cd3a365ffac0e7a65d27d75f4f049c3511570a",
+    "wns_ns": 0.011,
+    "whs_ns": 0.053,
+    "final_log": "final-timing.log",
+    "routed_design_reused_with_corrected_dac_constraints": true
+  },
+  "rtl_test_count": 7,
+  "python_tests": {
+    "passed": 19
+  },
+  "browser": {
+    "passed": true,
+    "checks": [
+      "Default direct target and disabled rate input",
+      "Browser submit reaches actual HTTP handler and UART step write",
+      "Explicit slow ramp schedules gradual updates",
+      "Old backend cannot silently turn a direct step into a ramp"
+    ],
+    "runtime_errors": [],
+    "physical_hardware_writes": 0,
+    "fixture_uart_writes": 2
+  },
+  "optical_bandwidth_remeasured": false,
+  "hardware_actions_during_github_publication": 0,
+  "console_source_sha256": {
+    "server.py": "f83c0fc75da6e34f4fa07ced3493ba41d7dd016389c5b4ed46390555e38705b8",
+    "app.js": "7d3689eb930f24edb602e67031b76f2392371ffc90e9423d5517adc458fbd890",
+    "index.html": "5e31e207c95bc169e9d7235ecdb8ad9286d45d6af051c2938aba3d7fa899d3cc",
+    "styles.css": "f5c7d478fbbba634f76ee50792f8b032d045ff16dfc3c9f22e67f1923c75130c",
+    "tests/test_target_modes.py": "d5031d2134c23d462e8fc7d50a6109c8bd3458d60e62d17f76220f291ac71e92",
+    "tests/check_target_browser.py": "782901efdb9a2ccd4cc83bf0951e9070d9b2aa109c7404c398808f20bd2bd903"
+  }
+}

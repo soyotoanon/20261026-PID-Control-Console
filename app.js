@@ -52,7 +52,10 @@
     if (!/^https?:$/.test(location.protocol)) throw Error('请双击 start.cmd，通过本机网页连接设备');
     // Verify channel routing before sending writes, including when an older
     // single-channel server is still running after the local files are updated.
-    if (body !== undefined) await api('/api/state', undefined, id);
+    if (body !== undefined) {
+      const service = await api('/api/state', undefined, id);
+      if (path === '/api/target' && !service.target_modes?.includes(body.mode)) throw Error('请重新启动控制台服务，以使用直接更新和渐变选项');
+    }
     const response = await fetch(`${path}?channel=${encodeURIComponent(id)}`, { method: body === undefined ? 'GET' : 'POST', headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'X-MOT-Console': '1' }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(12000), cache: 'no-store' });
     let value; try { value = await response.json(); } catch { throw Error('本机服务未启动，请双击 start.cmd'); }
     if (!response.ok) throw Error(value.error || '设备服务异常');
@@ -68,6 +71,8 @@
   }
   function loadControls() {
     const s = current(); $('target-input').value = s.draft; $('ramp-rate').value = s.rate;
+    $('target-mode').value = s.targetMode || 'step';
+    $('ramp-rate').disabled = $('target-mode').value !== 'ramp';
     $('target-input').max = s.calibration ? s.calibration.points.at(-1).power_mw : 100000;
     $('serial-port').value = s.port; renderMeterOptions();
     $('transmission-input').value = C.finite(s.config.transmission) ? fmt(s.config.transmission) : '';
@@ -81,6 +86,11 @@
     channelId = id; $('target-error').textContent = ''; loadControls(); render();
   }
   all('[data-channel]').forEach(b => b.onclick = () => switchChannel(b.dataset.channel));
+  $('target-mode').onchange = () => {
+    current().targetMode = $('target-mode').value;
+    $('ramp-rate').disabled = current().targetMode !== 'ramp';
+    render();
+  };
   function preview() {
     const s = current(), value = $('target-input').value.trim();
     const n = value === '' ? NaN : Number(value);
@@ -102,14 +112,15 @@
       const value = $('target-input').value, target = Number(value), rate = Number($('ramp-rate').value);
       if (!value.trim() || !C.finite(target) || target < 0) throw Error('请输入非负目标功率');
       if (s.calibration) C.toCode(s.calibration, target);
-      if (!(rate >= .01 && rate <= 100)) throw Error('变化速率为 0.01–100 mW/s');
+      const mode = $('target-mode').value;
+      if (mode === 'ramp' && !(rate >= .01 && rate <= 100)) throw Error('变化速率为 0.01–100 mW/s');
       s.busy = true; render();
       if (s.snapshot?.fpga.connected) {
         if (!s.calibration) throw Error(`请先导入 ${id} nm 本路标定，再应用目标`);
-        const result = await api('/api/target', { power_mw: target, rate_mw_s: rate, calibration: s.calibration }, id);
-        s.snapshot = result.state; s.applied = true; toast(`${id} nm 目标已接收，正在斜坡更新并读回`);
+        const result = await api('/api/target', { power_mw: target, mode, rate_mw_s: mode === 'ramp' ? rate : null, calibration: s.calibration }, id);
+        s.snapshot = result.state; s.applied = true; toast(mode === 'step' ? `${id} nm 目标已直接更新并读回` : `${id} nm 目标已接收，正在按速率渐变`);
       } else { s.applied = false; toast(`${id} nm 目标已保存，尚未下发到设备`); }
-      s.target = target; s.draft = value; s.rate = String(rate); s.chosen = true;
+      s.target = target; s.draft = value; if (Number.isFinite(rate)) s.rate = String(rate); s.targetMode = mode; s.chosen = true;
     } catch (err) { $('target-error').textContent = err.message; toast(err.message, true); }
     finally { s.busy = false; render(); }
   };
@@ -357,7 +368,7 @@
     $('loop-status').textContent = r.fpgaLive ? (f.status & 63 ? statusText(f.status) : f.pi_enabled ? '反馈已使能' : '反馈已停用') : '未连接'; $('loop-status').classList.toggle('warn', r.fpgaLive && !!(f.status & 63));
     $('efficiency-detail').innerHTML = C.finite(config.efficiency) ? fmt(config.efficiency) + '% <small>手填参考值</small>' : '<small>本路尚未填写</small>';
     $('apply-target').innerHTML = (f?.connected ? '应用目标功率' : '保存目标设定') + ' ' + icon('arrow'); $('apply-target').disabled = busy || !!(f?.connected && !cal);
-    $('apply-hint').textContent = !cal ? `应用 ${channelId} nm 目标前，需导入本路标定。` : f?.connected ? '在线斜坡更新，无需重新生成 bitstream。' : '连接本路 FPGA 后可在线应用目标光功率。';
+    $('apply-hint').textContent = !cal ? `应用 ${channelId} nm 目标前，需导入本路标定。` : f?.connected ? (s.targetMode === 'ramp' ? '按设定速率逐步更新目标。' : '一次更新目标，不附加变化速率限制。') : '连接本路 FPGA 后可在线应用目标光功率。';
     $('channel-calibration-status').textContent = cal ? `${channelId} nm · ${cal.points.length - 1} 段标定` : `${channelId} nm · 待标定`;
     $('channel-calibration-status').classList.toggle('channel-calibration-missing', !cal);
     $('calibration-summary').textContent = cal ? `${channelId} nm · ${cal.points.length - 1} 段标定` : `${channelId} nm 本路标定待载入`;
