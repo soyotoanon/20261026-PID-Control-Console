@@ -20,7 +20,7 @@ from urllib.parse import urlparse, parse_qs
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "vendor"))
 APP = "mot556-console"
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 
 
 def number(value, name):
@@ -323,7 +323,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.controller.connect_meter(identifier)
 
     def log_message(self, fmt, *args):
-        if not (args and isinstance(args[0], str) and any(p in args[0] for p in ("/api/state", "/api/ports", "/api/meters"))):
+        if not (args and isinstance(args[0], str) and any(p in args[0] for p in ("/api/health", "/api/state", "/api/ports", "/api/meters"))):
             super().log_message(fmt, *args)
 
     def host_allowed(self):
@@ -347,6 +347,10 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(403, {"error": "仅允许本机地址访问"})
             return
         path = urlparse(self.path).path
+        if path == "/api/health":
+            # Availability check must not wait for a serial/VISA device lock.
+            self.respond(200, {"healthy": True, "pid": os.getpid()})
+            return
         if path == "/api/state":
             self.respond(200, {"state": self.controller.snapshot()})
             return

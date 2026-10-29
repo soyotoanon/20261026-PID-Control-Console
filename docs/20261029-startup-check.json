@@ -1,0 +1,93 @@
+{
+  "checks": [
+    "Scheduled entry starts a healthy local server after its launcher shell exits",
+    "Startup leaves both instruments disconnected; no target or PI writes",
+    "Repeated open reuses the same server PID",
+    "Duplicate watcher exits without spawning another server",
+    "40 page/assets/health requests pass without restarting the service",
+    "Exited server recovers with a new PID and no automatic hardware commands",
+    "Current-user login trigger and unlimited task lifetime read back",
+    "Six real Edge loads/reloads restore actual FPGA readings; live service and instrument connections are preserved"
+  ],
+  "port": 18766,
+  "hardware_connected": false,
+  "hardware_control_writes": 0,
+  "launch_output": "{\"app\":\"mot556-console\",\"ready\":true,\"url\":\"http://127.0.0.1:18766\",\"task\":\"MOT-PID-Control-Console-18766\",\"state\":\"Running\"}",
+  "first": {
+    "app": "mot556-console",
+    "version": "1.2.1",
+    "instance_id": "d40ce4ba-c123-4a9f-83d6-913f46d6f9eb",
+    "healthy": true,
+    "pid": 12628
+  },
+  "recovery_seconds": 8.72,
+  "recovered": {
+    "app": "mot556-console",
+    "version": "1.2.1",
+    "instance_id": "7be4930c-78eb-472b-b106-4c625e6c596e",
+    "healthy": true,
+    "pid": 5572
+  },
+  "task": {
+    "TaskName": "MOT-PID-Control-Console-18766",
+    "State": 4,
+    "ExecutionTimeLimit": "PT0S",
+    "RunLevel": 0,
+    "LogonType": 3,
+    "Trigger": "MSFT_TaskLogonTrigger"
+  },
+  "passed": true,
+  "live_browser": {
+    "reloads": 6,
+    "values": [
+      {
+        "ready": "complete",
+        "power": "1.54",
+        "target": "1.54"
+      },
+      {
+        "ready": "complete",
+        "power": "1.56",
+        "target": "1.54"
+      },
+      {
+        "ready": "complete",
+        "power": "1.53",
+        "target": "1.54"
+      },
+      {
+        "ready": "complete",
+        "power": "1.53",
+        "target": "1.54"
+      },
+      {
+        "ready": "complete",
+        "power": "1.54",
+        "target": "1.54"
+      },
+      {
+        "ready": "complete",
+        "power": "1.54",
+        "target": "1.54"
+      }
+    ],
+    "runtime_errors": [],
+    "hardware_control_writes": 0,
+    "service_instance_unchanged": true,
+    "fpga_port": "COM9",
+    "meter_model": "PM100USB",
+    "http_responses": 42,
+    "real_device_data": true
+  },
+  "production_task": "MOT-PID-Control-Console",
+  "startup_mode": "current-user logon task; pythonw watcher; existing healthy live service reused",
+  "production_pid_restarted": false,
+  "login_trigger_readback_verified": true,
+  "actual_windows_reboot_tested": false,
+  "source_sha256": {
+    "server.py": "685058f91c0bdaceaf816351c4f069c34bd0c61ef17e20eb7fc17753e973ac43",
+    "launcher.py": "f48bd6f6cff3cb9d7e0ef24c2c6ead693faac90e7eea474ccb1add0ff510572e",
+    "start.ps1": "bec1a3a6d67fdf46e38769e4eaf95a43e47364c815c9115440aed45e9261a175",
+    "start.cmd": "ad527bd7e5d304eba7af30cca51787a9809b1434c233757f936344c27b578c51"
+  }
+}

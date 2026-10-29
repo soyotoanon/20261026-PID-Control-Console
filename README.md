@@ -2,7 +2,7 @@
 
 556 nm / 399 nm MOT 双通道光功率控制台。This application runs locally to communicate with laboratory instruments.
 
-双击 `start.cmd`，打开本机网页 http://127.0.0.1:8766 。也可直接打开 `index.html` 查看界面；真实设备连接需要启动本机服务。
+Windows 下双击 `start.cmd`，或桌面“**MOT 光功率控制台**”，自动检查后台服务后打开 http://127.0.0.1:8766 。首次启动登记当前用户的登录启动任务并创建桌面入口；之后重复打开会复用已有服务。网页和仪器通信都在本机运行，不依赖 GitHub 或外网。直接打开 `index.html` 仅能查看界面。
 
 ## 光路通道
 
@@ -45,7 +45,7 @@
 
 运行 `python -m unittest discover -s tests -v` 可重测设备与通道隔离，运行 `node tests/test_optics.cjs` 与 `node tests/test_stability.cjs` 可重测光路估算和 RMS；这些自动测试不访问真实仪器。最新真实 Edge 检查覆盖独立归一化、目标切换重计数、断连、通道切换、五种窗口尺寸及实际鼠标点击。浏览器隔离测试与真实设备状态分别记录于 docs/20261028-notebook-ui-check.json；先前实机连接和采样证据另见 docs 中对应记录。
 
-检查包完整性可运行 `python server.py --check`。端口占用时程序明确报错；需要时用 `python server.py --port 8767 --open` 更换端口。
+检查包完整性可运行 `python server.py --check`。Windows 日常使用请走 `start.cmd` / 桌面入口，由后台任务维护可用性。手动运行 `python server.py --port 8767 --open` 仍可用于调试；手动服务依赖该进程，端口已被占用时会明确报错。
 
 服务仅监听 127.0.0.1，启动不自动访问仪器。光路参数和每路选择的功率计序列号保存在本机浏览器中；刷新后从运行中的服务读取当前状态，服务重启后需重新连接设备。
 
@@ -119,3 +119,18 @@ USB 重新插拔后，Windows 可能更换串口编号。刷新和连接前都�
 ![Last valid range retained outside RF calibration](docs/range-reference-preview.png)
 
 上图使用浏览器隔离测试数据，展示历史参考的状态，不代表现场功率。11 项真实 Edge 检查覆盖串口变号、多端口选择、失败不记忆、跨通道独占、范围保留、刷新恢复、换表失效、仅填入不下发以及四种窗口首屏布局。最终移除测试数据后核对真实 COM9 与 PM100USB 连接，详见 docs/20261028-port-range-check.json。
+
+
+## 2026-10-29：本机启动与刷新可靠性
+
+地址 127.0.0.1 是当前电脑。浏览器的 ERR_CONNECTION_REFUSED 表示该端口当时没有接收连接的服务；仅刷新浏览器不能启动 Python。旧入口直接在前台运行 server.py，退出该进程后页面即不可用，重复启动则报端口占用；旧入口没有服务恢复与退出日志。
+
+新入口 `start.ps1` 创建当前用户、普通权限的 Windows 登录任务 `MOT-PID-Control-Console`，运行无控制台窗口的 `launcher.py`，不依赖浏览器或启动它的终端。任务没有默认三天执行时限，允许电池供电，守护进程异常退出时由任务计划重试。桌面快捷方式同样调用这个入口，重复打开复用正在运行的 MOT 服务。旧版健康服务也可被接管监测，无需为了更新启动方式打断仪器连接。
+
+守护程序检查本机服务，服务进程退出、端口空闲时重新启动；其他应用占用端口时不杀进程或接管端口。它不因仪器读数慢而重启服务。新增 `/api/health` 不等待串口或 VISA 读数。启动及自动恢复均不连接仪器、不下发目标或 PI 参数；若服务确实重启，重新在“连接设备”中连接仪器，板上运行状态不会因网页服务启动而被重设。普通浏览器刷新会继续使用既有连接。
+
+日志位于 `%LOCALAPPDATA%/MOT-PID-Control-Console/8766/`：`launcher.log` 记录启动、复用及进程退出，`server.log` 记录新启动服务的输出与异常。服务仅监听 127.0.0.1。关闭浏览器不会停止本机服务。需要停用后台运行时，可在 Windows 任务计划程序中结束并禁用 `MOT-PID-Control-Console`；再次双击入口前应重新启用任务。
+
+验证：独立端口 18766、无仪器连接，真实 Windows 任务启动后启动命令退出，服务仍持续响应；重复启动保持同一 PID；重复守护进程自动退出；40 次页面/资源/健康请求成功；结束测试服务后 8.72 秒恢复为新 PID，未自动连接硬件。正式 8766 服务直接复用旧实例，真实 Edge 连续 6 次加载/强制刷新均显示实际 COM9 的 FPGA 数据，PM100USB 连接保留、零控制写入。登录触发器已读回核对，未为本次验证重启电脑。详见 `docs/20261029-startup-check.json`。
+
+可在 Windows 运行 `python tests/check_windows_startup.py` 重测独立启动与恢复；脚本在端口 18766 和同名测试任务已占用时拒绝运行，完成后清理自己创建的测试任务。正式硬件服务不受该测试影响。
